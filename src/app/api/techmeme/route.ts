@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
 	try {
 		const items = await fetchTechmemeNews();
-		console.log(items);
+		// console.log(items);
 		return NextResponse.json({ items });
 	} catch (error) {
 		const message =
