@@ -42,39 +42,37 @@ export function HomePage() {
 						{items.map((item) => (
 							<li
 								key={item.linkUrl}
-								className="flex items-start gap-4 border-b border-black/10 pb-8 last:border-0 dark:border-white/10"
+								className="overflow-hidden border-b border-black/10 pb-8 last:border-0 dark:border-white/10"
 							>
-								<div className="min-w-0 flex-1">
-									<p className="text-xs font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
-										{item.source}
-									</p>
-									<a
-										href={item.linkUrl}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="mt-1 block text-lg font-medium leading-snug hover:underline"
-									>
-										{item.title}
-									</a>
-									{item.preview ? (
-										<p className="mt-2 text-sm leading-relaxed text-black/70 dark:text-white/70">
-											{item.preview}
-										</p>
-									) : null}
-								</div>
 								{item.imageUrl ? (
 									<a
 										href={item.linkUrl}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="shrink-0"
+										className="float-right mb-2 ml-3"
 									>
 										<img
 											src={item.imageUrl}
 											alt=""
-											className="max-h-28 max-w-40 rounded border border-foreground"
+											className="max-h-24 max-w-28 rounded border border-foreground sm:max-h-28 sm:max-w-36"
 										/>
 									</a>
+								) : null}
+								<p className="text-xs font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
+									{item.source}
+								</p>
+								<a
+									href={item.linkUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="mt-1 block text-lg font-medium leading-snug hover:underline"
+								>
+									{item.title}
+								</a>
+								{item.preview ? (
+									<p className="mt-2 text-sm leading-relaxed text-black/70 dark:text-white/70">
+										{item.preview}
+									</p>
 								) : null}
 							</li>
 						))}
