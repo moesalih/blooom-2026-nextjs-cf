@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Top News",
+	title: "Blooom",
 	description: "Top tech news from Techmeme",
 };
 

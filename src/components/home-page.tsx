@@ -24,7 +24,7 @@ export function HomePage() {
 		<div className="min-h-screen bg-background text-foreground">
 			<header className=" border-black/10 dark:border-white/10">
 				<div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
-					<h1 className="text-2xl font-semibold tracking-tight">Top News</h1>
+					<h1 className="text-2xl font-semibold tracking-tight">Blooom</h1>
 					<p className="mt-1 text-sm text-black/60 dark:text-white/60">
 						From{" "}
 						<a
