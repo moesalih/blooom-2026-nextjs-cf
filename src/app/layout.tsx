@@ -13,9 +13,15 @@ const geistMono = Geist_Mono({
 	subsets: ["latin"],
 });
 
+const newspaperIcon = "https://em-content.zobj.net/source/apple/453/newspaper_1f4f0.png";
+
 export const metadata: Metadata = {
 	title: "Blooom",
-	description: "Top tech news from Techmeme",
+	description: "Top tech news",
+	icons: {
+		icon: newspaperIcon,
+		apple: newspaperIcon,
+	},
 };
 
 export default function RootLayout({

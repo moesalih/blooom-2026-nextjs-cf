@@ -25,17 +25,6 @@ export function HomePage() {
 			<header className=" border-black/10 dark:border-white/10">
 				<div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
 					<h1 className="text-2xl font-semibold tracking-tight">Blooom</h1>
-					<p className="mt-1 text-sm text-black/60 dark:text-white/60">
-						From{" "}
-						<a
-							href="https://www.techmeme.com/"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="underline underline-offset-2 hover:text-foreground"
-						>
-							Techmeme
-						</a>
-					</p>
 				</div>
 			</header>
 
