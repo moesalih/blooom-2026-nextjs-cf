@@ -44,12 +44,15 @@ export function HomePage() {
 								key={item.linkUrl}
 								className="overflow-hidden border-b border-black/10 pb-8 last:border-0 dark:border-white/10"
 							>
+								<p className="text-xs font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
+									{item.source}
+								</p>
 								{item.imageUrl ? (
 									<a
 										href={item.linkUrl}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="float-right mb-2 ml-3"
+										className="float-right mb-2 ml-3 mt-1"
 									>
 										<img
 											src={item.imageUrl}
@@ -58,9 +61,6 @@ export function HomePage() {
 										/>
 									</a>
 								) : null}
-								<p className="text-xs font-medium uppercase tracking-wide text-black/50 dark:text-white/50">
-									{item.source}
-								</p>
 								<a
 									href={item.linkUrl}
 									target="_blank"
