@@ -39,6 +39,26 @@ export async function GET(
 		});
 
 		if (!response.ok) {
+			let bodyText: string | undefined;
+			try {
+				bodyText = await response.text();
+			} catch {
+				// ignore: best-effort debug logging only
+			}
+
+			// Helps debug upstream rate limits / payload shapes.
+			console.error("[YahooFinance] Upstream error", {
+				symbol,
+				status: response.status,
+				statusText: response.statusText,
+				headers: {
+					// Keep logs small; only include likely-relevant headers.
+					"retry-after": response.headers.get("retry-after"),
+					"content-type": response.headers.get("content-type"),
+				},
+				body: bodyText ? bodyText.slice(0, 800) : undefined,
+			});
+
 			return NextResponse.json(
 				{ error: `Upstream error: ${response.status}` },
 				{ status: 502 },
@@ -76,6 +96,7 @@ export async function GET(
 	} catch (error) {
 		const message =
 			error instanceof Error ? error.message : "Failed to fetch stock data";
+		console.error("[YahooFinance] Fetch threw", { symbol, message });
 		return NextResponse.json({ error: message }, { status: 502 });
 	}
 }
