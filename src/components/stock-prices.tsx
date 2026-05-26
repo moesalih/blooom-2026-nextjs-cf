@@ -58,6 +58,9 @@ function StockRow({ symbol }: { symbol: Symbol }) {
 	const { data, isPending, isError } = useQuery({
 		queryKey: ["stock", symbol],
 		queryFn: () => fetchStock(symbol),
+		// Avoid refetch storms (each symbol is its own query).
+		refetchOnWindowFocus: false,
+		refetchOnReconnect: false,
 	});
 
 	const price = data?.price ?? null;

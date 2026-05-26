@@ -33,8 +33,9 @@ export async function GET(
 			headers: {
 				Accept: "application/json",
 			},
-			// Cache briefly to avoid hammering Yahoo when refreshing
-			next: { revalidate: 30 },
+			// Cache to reduce upstream 429s after deploy.
+			cache: "force-cache",
+			next: { revalidate: 300 },
 		});
 
 		if (!response.ok) {
@@ -59,11 +60,19 @@ export async function GET(
 			changePercent = ((price - previousClose) / previousClose) * 100;
 		}
 
-		return NextResponse.json({
-			symbol: symbol.toUpperCase(),
-			price,
-			changePercent,
-		});
+		return NextResponse.json(
+			{
+				symbol: symbol.toUpperCase(),
+				price,
+				changePercent,
+			},
+			{
+				headers: {
+					// Let edge/CDN cache this too (if supported by runtime).
+					"Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+				},
+			},
+		);
 	} catch (error) {
 		const message =
 			error instanceof Error ? error.message : "Failed to fetch stock data";
