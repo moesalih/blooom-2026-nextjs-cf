@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { PriceListSection, PriceRow } from "./price-list";
 
-const SYMBOLS = ["SPY", "NVDA", "AAPL", "MSFT", "AMZN", "GOOGL", "TSLA", "META"] as const;
+const SYMBOLS = ["SPY", "NVDA", "AAPL", "MSFT", "AMZN", "GOOGL", "TSLA", "META", "SOXL"] as const;
 
 type Symbol = (typeof SYMBOLS)[number];
 
