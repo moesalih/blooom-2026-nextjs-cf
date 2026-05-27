@@ -1,14 +1,14 @@
 # Next.js Framework Starter
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/next-starter-template)
+[Deploy to Cloudflare](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/next-starter-template)
 
-<!-- dash-content-start -->
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app). It's deployed on Cloudflare Workers as a [static website](https://developers.cloudflare.com/workers/static-assets/).
+
+This is a [Next.js](https://nextjs.org/) project bootstrapped with `[create-next-app](https://github.com/vercel/next.js/tree/canary/packages/create-next-app)`. It's deployed on Cloudflare Workers as a [static website](https://developers.cloudflare.com/workers/static-assets/).
 
 This template uses [OpenNext](https://opennext.js.org/) via the [OpenNext Cloudflare adapter](https://opennext.js.org/cloudflare), which works by taking the Next.js build output and transforming it, so that it can run in Cloudflare Workers.
 
-<!-- dash-content-end -->
+
 
 Outside of this repo, you can start a new project with this template using [C3](https://developers.cloudflare.com/pages/get-started/c3/) (the `create-cloudflare` CLI):
 
@@ -36,16 +36,18 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+This project uses `[next/font](https://nextjs.org/docs/basic-features/font-optimization)` to automatically optimize and load Inter, a custom Google Font.
 
 ## Deploying To Production
 
-| Command                           | Action                                       |
-| :-------------------------------- | :------------------------------------------- |
-| `pnpm build`                      | Build your production site                   |
-| `pnpm preview`                    | Preview your build locally, before deploying |
-| `pnpm build && pnpm deploy`       | Deploy your production site to Cloudflare    |
-| `pnpm wrangler tail`              | View real-time logs for all Workers          |
+
+| Command                     | Action                                       |
+| --------------------------- | -------------------------------------------- |
+| `pnpm build`                | Build your production site                   |
+| `pnpm preview`              | Preview your build locally, before deploying |
+| `pnpm build && pnpm deploy` | Deploy your production site to Cloudflare    |
+| `pnpm wrangler tail`        | View real-time logs for all Workers          |
+
 
 ## Learn More
 
@@ -54,4 +56,3 @@ To learn more about Next.js, take a look at the following resources:
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
