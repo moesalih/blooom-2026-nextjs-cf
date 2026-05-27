@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
 
-type YahooChartResponse = {
-	chart?: {
-		result?: Array<{
-			meta?: {
-				symbol?: string;
-				regularMarketPrice?: number;
-				previousClose?: number;
-			};
-		}>;
-		error?: unknown;
-	};
+type StooqQuoteResponse = {
+	symbols?: Array<{
+		symbol?: string;
+		previous?: number;
+		close?: number;
+	}>;
 };
 
 export async function GET(
@@ -26,10 +21,13 @@ export async function GET(
 		);
 	}
 
-	const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`;
+	const normalizedSymbol = symbol.includes(".")
+		? symbol.toLowerCase()
+		: `${symbol.toLowerCase()}.us`;
+	const stooqUrl = `https://stooq.com/q/l/?s=${encodeURIComponent(normalizedSymbol)}&f=sd2t2pohlcv&e=json`;
 
 	try {
-		const response = await fetch(yahooUrl, {
+		const response = await fetch(stooqUrl, {
 			headers: {
 				Accept: "application/json",
 			},
@@ -47,7 +45,7 @@ export async function GET(
 			}
 
 			// Helps debug upstream rate limits / payload shapes.
-			console.error("[YahooFinance] Upstream error", {
+			console.error("[Stooq] Upstream error", {
 				symbol,
 				status: response.status,
 				statusText: response.statusText,
@@ -65,15 +63,11 @@ export async function GET(
 			);
 		}
 
-		const json = (await response.json()) as YahooChartResponse;
-		const meta = json.chart?.result?.[0]?.meta;
-
-		const price =
-			typeof meta?.regularMarketPrice === "number"
-				? meta.regularMarketPrice
-				: null;
+		const json = (await response.json()) as StooqQuoteResponse;
+		const quote = json.symbols?.[0];
+		const price = typeof quote?.close === "number" ? quote.close : null;
 		const previousClose =
-			typeof meta?.previousClose === "number" ? meta.previousClose : null;
+			typeof quote?.previous === "number" ? quote.previous : null;
 
 		let changePercent: number | null = null;
 		if (price != null && previousClose != null && previousClose !== 0) {
@@ -96,7 +90,7 @@ export async function GET(
 	} catch (error) {
 		const message =
 			error instanceof Error ? error.message : "Failed to fetch stock data";
-		console.error("[YahooFinance] Fetch threw", { symbol, message });
+		console.error("[Stooq] Fetch threw", { symbol, message });
 		return NextResponse.json({ error: message }, { status: 502 });
 	}
 }
