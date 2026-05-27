@@ -1,0 +1,108 @@
+import type { ReactNode } from "react";
+
+export function formatPrice(value: number | null): string {
+	if (value == null || Number.isNaN(value)) {
+		return "—";
+	}
+	return value.toFixed(2);
+}
+
+export function formatChangePercent(value: number | null): string {
+	if (value == null || Number.isNaN(value)) {
+		return "—";
+	}
+
+	const sign = value > 0 ? "+" : value < 0 ? "−" : "";
+	return `${sign}${Math.abs(value).toFixed(2)}%`;
+}
+
+function changeColorClass(changePercent: number | null): string {
+	if (changePercent == null) {
+		return "text-muted-foreground";
+	}
+	if (changePercent > 0) {
+		return "text-emerald-500";
+	}
+	if (changePercent < 0) {
+		return "text-red-500";
+	}
+	return "text-muted-foreground";
+}
+
+type PriceRowProps = {
+	label: string;
+	price: number | null;
+	changePercent: number | null;
+	isPending?: boolean;
+	isError?: boolean;
+};
+
+export function PriceRow({
+	label,
+	price,
+	changePercent,
+	isPending = false,
+	isError = false,
+}: PriceRowProps) {
+	const changeColor = changeColorClass(changePercent);
+
+	if (isPending) {
+		return (
+			<div className="flex items-center justify-between py-1.5 text-sm text-muted-foreground">
+				<span className="font-medium">{label}</span>
+				<span className="inline-flex gap-3">
+					<span className="inline-block h-4 w-10 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+					<span className="inline-block h-4 w-12 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+				</span>
+			</div>
+		);
+	}
+
+	if (isError) {
+		return (
+			<div className="flex items-center justify-between py-1.5 text-sm text-muted-foreground">
+				<span className="font-medium">{label}</span>
+				<span className="inline-flex gap-3">
+					<span>—</span>
+					<span>—</span>
+				</span>
+			</div>
+		);
+	}
+
+	return (
+		<div className="flex items-center justify-between py-1.5 text-sm">
+			<span className="font-medium">{label}</span>
+			<span className="inline-flex items-baseline gap-3 tabular-nums">
+				<span className="text-right">{formatPrice(price)}</span>
+				<span className={changeColor}>{formatChangePercent(changePercent)}</span>
+			</span>
+		</div>
+	);
+}
+
+type PriceListSectionProps = {
+	title: string;
+	children: ReactNode;
+	className?: string;
+};
+
+export function PriceListSection({
+	title,
+	children,
+	className,
+}: PriceListSectionProps) {
+	return (
+		<section
+			className={
+				className ??
+				"rounded-lg border border-black/10 bg-muted/40 px-4 py-3 text-sm shadow-sm dark:border-white/10"
+			}
+		>
+			<h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-foreground/50">
+				{title}
+			</h2>
+			<div>{children}</div>
+		</section>
+	);
+}

@@ -1,3 +1,4 @@
+import { CryptoPrices } from "./crypto-prices";
 import { TechNews } from "./tech-news";
 import { StockPrices } from "./stock-prices";
 
@@ -15,8 +16,9 @@ export function HomePage() {
 					<section>
 						<TechNews />
 					</section>
-					<div className="lg:block">
+					<div className="flex flex-col gap-4">
 						<StockPrices />
+						<CryptoPrices />
 					</div>
 				</div>
 			</main>
