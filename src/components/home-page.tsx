@@ -7,7 +7,7 @@ export function HomePage() {
 		<div className="min-h-screen bg-background text-foreground">
 			<header className=" border-black/10 dark:border-white/10">
 				<div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-					<h1 className="text-2xl font-semibold tracking-tight">Blooom</h1>
+					<h1 className="text-xl font-semibold tracking-tight opacity-50">Blooom</h1>
 				</div>
 			</header>
 
