@@ -9,7 +9,7 @@ export function ColumnHeader({
 }) {
 	return (
 		<h2
-			className={`mb-3 text-base font-semibold tracking-tight opacity-50${bordered ? " border-b border-black/10 pb-2 dark:border-white/10" : ""}`}
+			className={`mb-3 text-base font-semibold tracking-tight opacity-50 ${bordered ? " border-b border-black/10 pb-2 dark:border-white/10" : ""}`}
 		>
 			{children}
 		</h2>
