@@ -1,5 +1,21 @@
 import type { ReactNode } from "react";
 
+export function ColumnHeader({
+	children,
+	bordered = true,
+}: {
+	children: ReactNode;
+	bordered?: boolean;
+}) {
+	return (
+		<h2
+			className={`mb-3 text-base font-semibold tracking-tight opacity-50${bordered ? " border-b border-black/10 pb-2 dark:border-white/10" : ""}`}
+		>
+			{children}
+		</h2>
+	);
+}
+
 export function formatPrice(value: number | null): string {
 	if (value == null || Number.isNaN(value)) {
 		return "—";
@@ -102,9 +118,7 @@ export function PriceListSection({
 				"rounded-lg border border-black/10 bg-muted/40 px-4 py-3 text-sm shadow-sm dark:border-white/10"
 			}
 		>
-			<h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-foreground/50">
-				{title}
-			</h2>
+			<ColumnHeader bordered={false}>{title}</ColumnHeader>
 			<div>{children}</div>
 		</section>
 	);

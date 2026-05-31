@@ -1,0 +1,38 @@
+import type { NewsItem } from "@/lib/news-item";
+
+export function NewsItemCard({ item }: { item: NewsItem }) {
+	return (
+		<li className="overflow-hidden border-b border-black/10 py-5 last:border-0 dark:border-white/10">
+			<p className="text-xs font-medium uppercase tracking-wide text-foreground/50">
+				{item.source}
+			</p>
+			{item.imageUrl ? (
+				<a
+					href={item.linkUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="float-right mb-2 ml-3 mt-1"
+				>
+					<img
+						src={item.imageUrl}
+						alt=""
+						className="max-h-24 max-w-28 rounded border border-foreground sm:max-h-28 sm:max-w-36"
+					/>
+				</a>
+			) : null}
+			<a
+				href={item.linkUrl}
+				target="_blank"
+				rel="noopener noreferrer"
+				className="mt-1 block text-lg font-medium leading-snug hover:underline"
+			>
+				{item.title}
+			</a>
+			{item.preview ? (
+				<p className="mt-2 text-sm leading-relaxed text-black/70 dark:text-white/70">
+					{item.preview}
+				</p>
+			) : null}
+		</li>
+	);
+}

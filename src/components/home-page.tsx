@@ -1,25 +1,32 @@
+import { ColumnHeader } from "./price-list";
 import { CryptoPrices } from "./crypto-prices";
-import { TechNews } from "./tech-news";
 import { StockPrices } from "./stock-prices";
+import { TechNews } from "./tech-news";
+import { WorldNews } from "./world-news";
 
 export function HomePage() {
 	return (
 		<div className="min-h-screen bg-background text-foreground">
 			<header className=" border-black/10 dark:border-white/10">
-				<div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-					<h1 className="text-xl font-semibold tracking-tight opacity-50">Blooom</h1>
+				<div className="w-full px-4 py-6 sm:px-8 lg:px-10">
+					<h1 className="text-xl font-semibold tracking-tight">Blooom</h1>
 				</div>
 			</header>
 
-			<main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-				<div className="grid gap-8 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1fr)]">
-					<section>
-						<TechNews />
-					</section>
+			<main className="w-full px-4 py-8 sm:px-8 lg:px-10">
+				<div className="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,2.1fr)_minmax(0,2.1fr)]">
 					<div className="flex flex-col gap-4">
 						<StockPrices />
 						<CryptoPrices />
 					</div>
+					<section>
+						<ColumnHeader>Tech News</ColumnHeader>
+						<TechNews />
+					</section>
+					<section>
+						<ColumnHeader>World News</ColumnHeader>
+						<WorldNews />
+					</section>
 				</div>
 			</main>
 		</div>

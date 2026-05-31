@@ -5,7 +5,7 @@ import type { NewsItem } from "@/lib/news-item";
 import { useQuery } from "@tanstack/react-query";
 
 async function fetchNewsItems(): Promise<NewsItem[]> {
-	const response = await fetch("/api/techmeme");
+	const response = await fetch("/api/news/world");
 
 	if (!response.ok) {
 		throw new Error("Failed to load news");
@@ -15,9 +15,9 @@ async function fetchNewsItems(): Promise<NewsItem[]> {
 	return data.items ?? [];
 }
 
-export function TechNews() {
+export function WorldNews() {
 	const { data: items, isPending, isError } = useQuery({
-		queryKey: ["techmeme"],
+		queryKey: ["bbc-world"],
 		queryFn: fetchNewsItems,
 	});
 
@@ -45,4 +45,3 @@ export function TechNews() {
 		</ul>
 	);
 }
-
