@@ -35,6 +35,9 @@ export function formatChangePercent(value: number | null): string {
 	return `${sign}${Math.abs(value).toFixed(2)}%`;
 }
 
+const changeColumnClass =
+	"w-[3.5rem] shrink-0 text-right tabular-nums";
+
 function changeColorClass(changePercent: number | null): string {
 	if (changePercent == null) {
 		return "text-muted-foreground";
@@ -71,7 +74,9 @@ export function PriceRow({
 				<span className="font-medium">{label}</span>
 				<span className="inline-flex gap-3">
 					<span className="inline-block h-4 w-10 animate-pulse rounded bg-black/10 dark:bg-white/10" />
-					<span className="inline-block h-4 w-12 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+					<span
+						className={`inline-block h-4 animate-pulse rounded bg-black/10 dark:bg-white/10 ${changeColumnClass}`}
+					/>
 				</span>
 			</div>
 		);
@@ -81,9 +86,9 @@ export function PriceRow({
 		return (
 			<div className="flex items-center justify-between py-1.5 text-sm text-muted-foreground">
 				<span className="font-medium">{label}</span>
-				<span className="inline-flex gap-3">
-					<span>—</span>
-					<span>—</span>
+				<span className="inline-flex gap-3 tabular-nums">
+					<span className="text-right">—</span>
+					<span className={changeColumnClass}>—</span>
 				</span>
 			</div>
 		);
@@ -94,7 +99,9 @@ export function PriceRow({
 			<span className="font-medium">{label}</span>
 			<span className="inline-flex items-baseline gap-3 tabular-nums">
 				<span className="text-right">{formatPrice(price)}</span>
-				<span className={changeColor}>{formatChangePercent(changePercent)}</span>
+				<span className={`${changeColumnClass} ${changeColor}`}>
+					{formatChangePercent(changePercent)}
+				</span>
 			</span>
 		</div>
 	);
