@@ -103,21 +103,11 @@ export function PriceRow({
 type PriceListSectionProps = {
 	title: string;
 	children: ReactNode;
-	className?: string;
 };
 
-export function PriceListSection({
-	title,
-	children,
-	className,
-}: PriceListSectionProps) {
+export function PriceListSection({ title, children }: PriceListSectionProps) {
 	return (
-		<section
-			className={
-				className ??
-				"rounded-lg border border-black/10 bg-muted/40 px-4 py-3 text-sm shadow-sm dark:border-white/10"
-			}
-		>
+		<section className="text-sm">
 			<ColumnHeader bordered={false}>{title}</ColumnHeader>
 			<div>{children}</div>
 		</section>
