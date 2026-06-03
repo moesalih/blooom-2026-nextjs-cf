@@ -35,6 +35,22 @@ export function formatChangePercent(value: number | null): string {
 	return `${sign}${Math.abs(value).toFixed(2)}%`;
 }
 
+export function formatMarketCap(value: number | null): string {
+	if (value == null || Number.isNaN(value)) {
+		return "—";
+	}
+	return new Intl.NumberFormat("en-US", {
+		notation: "compact",
+		maximumFractionDigits: 2,
+	}).format(value);
+}
+
+const marketCapColumnClass =
+	"w-[4.5rem] shrink-0 text-right tabular-nums text-muted-foreground";
+
+const priceColumnClass =
+	"w-[5rem] shrink-0 text-right tabular-nums";
+
 const changeColumnClass =
 	"w-[3.5rem] shrink-0 text-right tabular-nums";
 
@@ -55,6 +71,7 @@ type PriceRowProps = {
 	label: string;
 	price: number | null;
 	changePercent: number | null;
+	marketCap?: number | null;
 	isPending?: boolean;
 	isError?: boolean;
 };
@@ -63,11 +80,13 @@ export function PriceRow({
 	label,
 	price,
 	changePercent,
+	marketCap,
 	isPending = false,
 	isError = false,
 }: PriceRowProps) {
 	const muted = isPending || isError;
 	const changeColor = muted ? "" : changeColorClass(changePercent);
+	const showMarketCap = marketCap !== undefined;
 
 	return (
 		<div
@@ -79,14 +98,26 @@ export function PriceRow({
 			>
 				{isPending ? (
 					<>
-						<span className="inline-block h-4 w-10 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+						{showMarketCap ? (
+							<span
+								className={`inline-block h-4 animate-pulse rounded bg-black/10 dark:bg-white/10 ${marketCapColumnClass}`}
+							/>
+						) : null}
+						<span
+							className={`inline-block h-4 animate-pulse rounded bg-black/10 dark:bg-white/10 ${priceColumnClass}`}
+						/>
 						<span
 							className={`inline-block h-4 animate-pulse rounded bg-black/10 dark:bg-white/10 ${changeColumnClass}`}
 						/>
 					</>
 				) : (
 					<>
-						<span className="text-right">
+						{showMarketCap ? (
+							<span className={marketCapColumnClass}>
+								{isError ? "—" : formatMarketCap(marketCap)}
+							</span>
+						) : null}
+						<span className={priceColumnClass}>
 							{isError ? "—" : formatPrice(price)}
 						</span>
 						<span className={`${changeColumnClass} ${changeColor}`}>

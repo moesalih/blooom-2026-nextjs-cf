@@ -17,6 +17,7 @@ type CryptoRowData = {
 	symbol: Symbol;
 	price: number | null;
 	changePercent: number | null;
+	marketCap: number | null;
 };
 
 type CoinGeckoPriceResponse = Record<
@@ -24,12 +25,13 @@ type CoinGeckoPriceResponse = Record<
 	{
 		usd?: number;
 		usd_24h_change?: number;
+		usd_market_cap?: number;
 	}
 >;
 
 async function fetchCryptoPrices(): Promise<CryptoRowData[]> {
 	const ids = Object.values(COIN_IDS).join(",");
-	const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
+	const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`;
 	const response = await fetch(url);
 
 	if (!response.ok) {
@@ -47,6 +49,7 @@ async function fetchCryptoPrices(): Promise<CryptoRowData[]> {
 				typeof quote?.usd_24h_change === "number" && !Number.isNaN(quote.usd_24h_change)
 					? quote.usd_24h_change
 					: null,
+			marketCap: typeof quote?.usd_market_cap === "number" && !Number.isNaN(quote.usd_market_cap) ? quote.usd_market_cap : null,
 		};
 	});
 }
@@ -67,6 +70,7 @@ export function CryptoPrices() {
 						label={symbol}
 						price={row?.price ?? null}
 						changePercent={row?.changePercent ?? null}
+						marketCap={row?.marketCap ?? null}
 						isPending={isPending}
 						isError={isError}
 					/>
