@@ -2,7 +2,7 @@ import type { NewsItem } from "@/lib/news-item";
 
 export function NewsItemCard({ item }: { item: NewsItem }) {
 	return (
-		<li className="overflow-hidden border-b border-black/10 py-5 last:border-0 dark:border-white/10">
+		<li className="overflow-hidden py-5">
 			<p className="text-xs font-medium uppercase tracking-wide text-foreground/50">
 				{item.source}
 			</p>
