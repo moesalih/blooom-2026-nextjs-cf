@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { PriceListSection, PriceRow } from "./price-list";
+import { PriceRow } from "./price-list";
 
 const SYMBOLS = ["BTC", "ETH", "SOL"] as const;
 
@@ -58,7 +58,7 @@ export function CryptoPrices() {
 	});
 
 	return (
-		<PriceListSection title="Crypto">
+		<div>
 			{SYMBOLS.map((symbol) => {
 				const row = data?.find((item) => item.symbol === symbol);
 				return (
@@ -72,6 +72,6 @@ export function CryptoPrices() {
 					/>
 				);
 			})}
-		</PriceListSection>
+		</div>
 	);
 }

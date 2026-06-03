@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { PriceListSection, PriceRow } from "./price-list";
+import { PriceRow } from "./price-list";
 
 const SYMBOLS = ["SPY", "NVDA", "AAPL", "MSFT", "AMZN", "GOOGL", "TSLA", "META", "SOXL"] as const;
 
@@ -58,10 +58,10 @@ function StockRow({ symbol }: { symbol: Symbol }) {
 
 export function StockPrices() {
 	return (
-		<PriceListSection title="Stocks">
+		<div>
 			{SYMBOLS.map((symbol) => (
 				<StockRow key={symbol} symbol={symbol} />
 			))}
-		</PriceListSection>
+		</div>
 	);
 }

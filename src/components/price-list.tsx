@@ -9,7 +9,7 @@ export function ColumnHeader({
 }) {
 	return (
 		<h2
-			className={`mb-3 text-base font-semibold tracking-tight opacity-50 ${bordered ? " border-b border-black/10 pb-2 dark:border-white/10" : ""}`}
+			className={`mb-3 text-base font-semibold tracking-tight opacity-50 ${bordered ? "border-b border-black/10 pb-2 dark:border-white/10" : ""}`}
 		>
 			{children}
 		</h2>
@@ -66,57 +66,35 @@ export function PriceRow({
 	isPending = false,
 	isError = false,
 }: PriceRowProps) {
-	const changeColor = changeColorClass(changePercent);
-
-	if (isPending) {
-		return (
-			<div className="flex items-center justify-between py-1.5 text-sm text-muted-foreground">
-				<span className="font-medium">{label}</span>
-				<span className="inline-flex gap-3">
-					<span className="inline-block h-4 w-10 animate-pulse rounded bg-black/10 dark:bg-white/10" />
-					<span
-						className={`inline-block h-4 animate-pulse rounded bg-black/10 dark:bg-white/10 ${changeColumnClass}`}
-					/>
-				</span>
-			</div>
-		);
-	}
-
-	if (isError) {
-		return (
-			<div className="flex items-center justify-between py-1.5 text-sm text-muted-foreground">
-				<span className="font-medium">{label}</span>
-				<span className="inline-flex gap-3 tabular-nums">
-					<span className="text-right">—</span>
-					<span className={changeColumnClass}>—</span>
-				</span>
-			</div>
-		);
-	}
+	const muted = isPending || isError;
+	const changeColor = muted ? "" : changeColorClass(changePercent);
 
 	return (
-		<div className="flex items-center justify-between py-1.5 text-sm">
+		<div
+			className={`flex items-center justify-between py-1.5 ${muted ? "text-muted-foreground" : ""}`}
+		>
 			<span className="font-medium">{label}</span>
-			<span className="inline-flex items-baseline gap-3 tabular-nums">
-				<span className="text-right">{formatPrice(price)}</span>
-				<span className={`${changeColumnClass} ${changeColor}`}>
-					{formatChangePercent(changePercent)}
-				</span>
+			<span
+				className={`inline-flex gap-3 ${isPending ? "" : "items-baseline tabular-nums"}`}
+			>
+				{isPending ? (
+					<>
+						<span className="inline-block h-4 w-10 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+						<span
+							className={`inline-block h-4 animate-pulse rounded bg-black/10 dark:bg-white/10 ${changeColumnClass}`}
+						/>
+					</>
+				) : (
+					<>
+						<span className="text-right">
+							{isError ? "—" : formatPrice(price)}
+						</span>
+						<span className={`${changeColumnClass} ${changeColor}`}>
+							{isError ? "—" : formatChangePercent(changePercent)}
+						</span>
+					</>
+				)}
 			</span>
 		</div>
-	);
-}
-
-type PriceListSectionProps = {
-	title: string;
-	children: ReactNode;
-};
-
-export function PriceListSection({ title, children }: PriceListSectionProps) {
-	return (
-		<section className="text-sm">
-			<ColumnHeader bordered={false}>{title}</ColumnHeader>
-			<div>{children}</div>
-		</section>
 	);
 }
