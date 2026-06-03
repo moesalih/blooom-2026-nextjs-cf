@@ -3,17 +3,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { PriceRow } from "./price-list";
 
-const SYMBOLS = ["SPY", "NVDA", "AAPL", "MSFT", "AMZN", "GOOGL", "TSLA", "META", "SOXL"] as const;
-
-type Symbol = (typeof SYMBOLS)[number];
+export const INDEX_SYMBOLS = ["SPY", "QQQ", "SOXL"] as const;
+export const STOCK_SYMBOLS = [
+	"NVDA",
+	"AAPL",
+	"MSFT",
+	"AMZN",
+	"GOOGL",
+	"TSLA",
+	"META",
+] as const;
 
 type StockRowData = {
-	symbol: Symbol;
+	symbol: string;
 	price: number | null;
 	changePercent: number | null;
 };
 
-async function fetchStock(symbol: Symbol): Promise<StockRowData> {
+async function fetchStock(symbol: string): Promise<StockRowData> {
 	const response = await fetch(`/api/stocks/${encodeURIComponent(symbol)}`);
 
 	if (!response.ok) {
@@ -39,7 +46,7 @@ async function fetchStock(symbol: Symbol): Promise<StockRowData> {
 	};
 }
 
-function StockRow({ symbol }: { symbol: Symbol }) {
+function StockRow({ symbol }: { symbol: string }) {
 	const { data, isPending, isError } = useQuery({
 		queryKey: ["stock", symbol],
 		queryFn: () => fetchStock(symbol),
@@ -56,10 +63,10 @@ function StockRow({ symbol }: { symbol: Symbol }) {
 	);
 }
 
-export function StockPrices() {
+export function StockPrices({ symbols }: { symbols: readonly string[] }) {
 	return (
 		<div>
-			{SYMBOLS.map((symbol) => (
+			{symbols.map((symbol) => (
 				<StockRow key={symbol} symbol={symbol} />
 			))}
 		</div>
