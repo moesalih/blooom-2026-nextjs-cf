@@ -13,7 +13,7 @@ export function HomePage() {
 			</header>
 
 			<main className="w-full px-4 py-8 sm:px-8 lg:px-10">
-				<div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,2.1fr)]">
+				<div className="grid gap-12 2xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,2.1fr)]">
 					<MarketPrices />
 					<section>
 						<ColumnHeader>Tech News</ColumnHeader>
