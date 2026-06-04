@@ -4,6 +4,8 @@ export type ParsedTopCompany = {
 	name: string;
 	symbol: string;
 	marketCap: number;
+	price: number | null;
+	changePercent: number | null;
 };
 
 function symbolStartsWithDigit(symbol: string): boolean {
@@ -37,6 +39,12 @@ export function parseTopCompanies(
 		const marketCapMatch = rowHtml.match(
 			/<td class="td-right" data-sort="(\d+)"><span class="currency-symbol-left">/,
 		);
+		const priceMatch = rowHtml.match(
+			/<td class="td-right" data-sort="([\d.]+)">\$[^<]*<\/td>/,
+		);
+		const changeMatch = rowHtml.match(
+			/<td data-sort="(-?[\d.]+)" class="rh-sm">/,
+		);
 
 		if (!nameMatch || !symbolMatch || !marketCapMatch) {
 			continue;
@@ -52,10 +60,20 @@ export function parseTopCompanies(
 			continue;
 		}
 
+		const priceRaw = priceMatch ? Number(priceMatch[1]) : NaN;
+		const price = Number.isFinite(priceRaw) ? priceRaw / 100 : null;
+
+		const changeRaw = changeMatch ? Number(changeMatch[1]) : NaN;
+		const changePercent = Number.isFinite(changeRaw)
+			? changeRaw / 100
+			: null;
+
 		companies.push({
 			name: nameMatch[1].trim(),
-			symbol,
+			symbol: symbol.toUpperCase(),
 			marketCap,
+			price,
+			changePercent,
 		});
 	}
 

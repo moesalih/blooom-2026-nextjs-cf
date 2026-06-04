@@ -1,36 +1,9 @@
 import { fetchTopCompaniesFromSite } from "@/lib/companies-marketcap";
-import { fetchStooqQuote } from "@/lib/stooq";
 import { NextResponse } from "next/server";
 
 export async function GET() {
 	try {
-		const parsed = await fetchTopCompaniesFromSite(10);
-
-		const companies = await Promise.all(
-			parsed.map(async ({ name, symbol, marketCap }) => {
-				try {
-					const quote = await fetchStooqQuote(symbol);
-					return {
-						...quote,
-						name,
-						marketCap,
-					};
-				} catch (error) {
-					console.error("[Stooq] Failed quote for top company", {
-						symbol,
-						message:
-							error instanceof Error ? error.message : "Unknown error",
-					});
-					return {
-						symbol: symbol.toUpperCase(),
-						price: null,
-						changePercent: null,
-						name,
-						marketCap,
-					};
-				}
-			}),
-		);
+		const companies = await fetchTopCompaniesFromSite(10);
 
 		return NextResponse.json(companies, {
 			headers: {
