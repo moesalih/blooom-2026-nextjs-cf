@@ -41,6 +41,7 @@ export function formatMarketCap(value: number | null): string {
 	}
 	return new Intl.NumberFormat("en-US", {
 		notation: "compact",
+		minimumFractionDigits: 2,
 		maximumFractionDigits: 2,
 	}).format(value);
 }
@@ -49,10 +50,10 @@ const marketCapColumnClass =
 	"w-[4.5rem] shrink-0 text-right tabular-nums text-muted-foreground";
 
 const priceColumnClass =
-	"w-[5rem] shrink-0 text-right tabular-nums";
+	"w-[5.5rem] shrink-0 text-right tabular-nums";
 
 const changeColumnClass =
-	"w-[3.5rem] shrink-0 text-right tabular-nums";
+	"w-[4rem] shrink-0 text-right tabular-nums";
 
 function changeColorClass(changePercent: number | null): string {
 	if (changePercent == null) {
