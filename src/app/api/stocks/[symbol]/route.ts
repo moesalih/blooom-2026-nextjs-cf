@@ -1,4 +1,4 @@
-import { fetchStooqQuote } from "@/lib/stooq";
+import { fetchCnbcQuote } from "@/lib/cnbc";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -15,7 +15,7 @@ export async function GET(
 	}
 
 	try {
-		const quote = await fetchStooqQuote(symbol);
+		const quote = await fetchCnbcQuote(symbol);
 
 		return NextResponse.json(quote, {
 			headers: {
@@ -25,7 +25,7 @@ export async function GET(
 	} catch (error) {
 		const message =
 			error instanceof Error ? error.message : "Failed to fetch stock data";
-		console.error("[Stooq] Fetch threw", { symbol, message });
+		console.error("[CNBC] Fetch threw", { symbol, message });
 		return NextResponse.json({ error: message }, { status: 502 });
 	}
 }

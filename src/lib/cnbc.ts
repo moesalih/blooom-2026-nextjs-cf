@@ -1,0 +1,121 @@
+type CnbcFinancialQuoteJsonLd = {
+	"@type"?: string;
+	tickerSymbol?: string;
+	price?: string;
+	priceChangePercent?: string;
+};
+
+export type CnbcQuote = {
+	symbol: string;
+	price: number | null;
+	changePercent: number | null;
+};
+
+function parseNumber(value: string | undefined): number | null {
+	if (value == null || value === "") {
+		return null;
+	}
+
+	const parsed = Number.parseFloat(value);
+	return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseFinancialQuoteJsonLd(html: string): CnbcQuote | null {
+	for (const match of html.matchAll(
+		/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi,
+	)) {
+		let data: CnbcFinancialQuoteJsonLd;
+		try {
+			data = JSON.parse(match[1]) as CnbcFinancialQuoteJsonLd;
+		} catch {
+			continue;
+		}
+
+		if (data["@type"] !== "Intangible/FinancialQuote") {
+			continue;
+		}
+
+		return {
+			symbol: (data.tickerSymbol ?? "").toUpperCase(),
+			price: parseNumber(data.price),
+			changePercent: parseNumber(data.priceChangePercent),
+		};
+	}
+
+	return null;
+}
+
+function parseCloseQuoteStrip(html: string): Pick<CnbcQuote, "price" | "changePercent"> {
+	const closeMatch = html.match(
+		/QuoteStrip-lastTradeTime">Close<\/div><div class="QuoteStrip-lastPriceStripContainer"><span class="QuoteStrip-lastPrice">([^<]+)<\/span>[\s\S]*?\((?:<!--\s*-->)?(-?\d+(?:\.\d+)?)%(?:<!--\s*-->)?\)/,
+	);
+
+	return {
+		price: parseNumber(closeMatch?.[1]),
+		changePercent: parseNumber(closeMatch?.[2]),
+	};
+}
+
+export function parseCnbcQuoteHtml(
+	html: string,
+	symbol: string,
+): CnbcQuote {
+	const normalizedSymbol = symbol.toUpperCase();
+	const fromJsonLd = parseFinancialQuoteJsonLd(html);
+
+	if (fromJsonLd?.price != null && fromJsonLd.changePercent != null) {
+		return {
+			symbol: fromJsonLd.symbol || normalizedSymbol,
+			price: fromJsonLd.price,
+			changePercent: fromJsonLd.changePercent,
+		};
+	}
+
+	const fromQuoteStrip = parseCloseQuoteStrip(html);
+
+	return {
+		symbol: normalizedSymbol,
+		price: fromJsonLd?.price ?? fromQuoteStrip.price,
+		changePercent:
+			fromJsonLd?.changePercent ?? fromQuoteStrip.changePercent,
+	};
+}
+
+export async function fetchCnbcQuote(symbol: string): Promise<CnbcQuote> {
+	const normalizedSymbol = symbol.toUpperCase();
+	const cnbcUrl = `https://www.cnbc.com/quotes/${encodeURIComponent(normalizedSymbol)}`;
+
+	const response = await fetch(cnbcUrl, {
+		headers: {
+			Accept: "text/html",
+			"User-Agent": "Mozilla/5.0",
+		},
+		cache: "force-cache",
+		next: { revalidate: 300 },
+	});
+
+	if (!response.ok) {
+		let bodyText: string | undefined;
+		try {
+			bodyText = await response.text();
+		} catch {
+			// ignore: best-effort debug logging only
+		}
+
+		console.error("[CNBC] Upstream error", {
+			symbol: normalizedSymbol,
+			status: response.status,
+			statusText: response.statusText,
+			headers: {
+				"retry-after": response.headers.get("retry-after"),
+				"content-type": response.headers.get("content-type"),
+			},
+			body: bodyText ? bodyText.slice(0, 800) : undefined,
+		});
+
+		throw new Error(`Upstream error: ${response.status}`);
+	}
+
+	const html = await response.text();
+	return parseCnbcQuoteHtml(html, normalizedSymbol);
+}
