@@ -9,6 +9,7 @@ export type CnbcQuote = {
 	symbol: string;
 	price: number | null;
 	changePercent: number | null;
+	marketCap: number | null;
 };
 
 function parseNumber(value: string | undefined): number | null {
@@ -20,7 +21,53 @@ function parseNumber(value: string | undefined): number | null {
 	return Number.isFinite(parsed) ? parsed : null;
 }
 
-function parseFinancialQuoteJsonLd(html: string): CnbcQuote | null {
+const MARKET_CAP_SUFFIX_MULTIPLIERS: Record<string, number> = {
+	K: 1_000,
+	M: 1_000_000,
+	B: 1_000_000_000,
+	T: 1_000_000_000_000,
+};
+
+function parseCompactMarketCap(value: string | undefined): number | null {
+	if (value == null || value === "" || value === "-") {
+		return null;
+	}
+
+	const match = value.trim().match(/^([\d,.]+)\s*([KMBT])$/i);
+	if (!match) {
+		return parseNumber(value.replaceAll(",", ""));
+	}
+
+	const amount = Number.parseFloat(match[1].replaceAll(",", ""));
+	const multiplier = MARKET_CAP_SUFFIX_MULTIPLIERS[match[2].toUpperCase()];
+
+	if (!Number.isFinite(amount) || multiplier == null) {
+		return null;
+	}
+
+	return amount * multiplier;
+}
+
+function parseMarketCapFromHtml(html: string): number | null {
+	const visibleMarketCapPatterns = [
+		/SplitStats-name">Market Cap<\/span><span class="SplitStats-price">([^<]+)<\/span>/,
+		/Summary-label">Market Cap<\/span><span class="Summary-value">([^<]+)<\/span>/,
+	];
+
+	for (const pattern of visibleMarketCapPatterns) {
+		const match = html.match(pattern);
+		const marketCap = parseCompactMarketCap(match?.[1]);
+		if (marketCap != null) {
+			return marketCap;
+		}
+	}
+
+	return null;
+}
+
+function parseFinancialQuoteJsonLd(
+	html: string,
+): Omit<CnbcQuote, "marketCap"> | null {
 	for (const match of html.matchAll(
 		/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi,
 	)) {
@@ -45,7 +92,9 @@ function parseFinancialQuoteJsonLd(html: string): CnbcQuote | null {
 	return null;
 }
 
-function parseCloseQuoteStrip(html: string): Pick<CnbcQuote, "price" | "changePercent"> {
+function parseCloseQuoteStrip(
+	html: string,
+): Pick<CnbcQuote, "price" | "changePercent"> {
 	const closeMatch = html.match(
 		/QuoteStrip-lastTradeTime">Close<\/div><div class="QuoteStrip-lastPriceStripContainer"><span class="QuoteStrip-lastPrice">([^<]+)<\/span>[\s\S]*?\((?:<!--\s*-->)?(-?\d+(?:\.\d+)?)%(?:<!--\s*-->)?\)/,
 	);
@@ -62,12 +111,14 @@ export function parseCnbcQuoteHtml(
 ): CnbcQuote {
 	const normalizedSymbol = symbol.toUpperCase();
 	const fromJsonLd = parseFinancialQuoteJsonLd(html);
+	const marketCap = parseMarketCapFromHtml(html);
 
 	if (fromJsonLd?.price != null && fromJsonLd.changePercent != null) {
 		return {
 			symbol: fromJsonLd.symbol || normalizedSymbol,
 			price: fromJsonLd.price,
 			changePercent: fromJsonLd.changePercent,
+			marketCap,
 		};
 	}
 
@@ -78,6 +129,7 @@ export function parseCnbcQuoteHtml(
 		price: fromJsonLd?.price ?? fromQuoteStrip.price,
 		changePercent:
 			fromJsonLd?.changePercent ?? fromQuoteStrip.changePercent,
+		marketCap,
 	};
 }
 
