@@ -31,7 +31,10 @@ function extractImageUrl(cardHtml: string): string | null {
 }
 
 function parseCard(cardHtml: string): NewsItem | null {
-	const linkMatch = cardHtml.match(/href="(\/news\/[^"]+)"/i);
+	// Live cards use absolute bbc.com URLs; regular cards use relative /news/ paths.
+	const linkMatch = cardHtml.match(
+		/href="((?:https:\/\/www\.bbc\.com)?\/news\/[^"]+)"/i,
+	);
 	const headlineMatch = cardHtml.match(
 		/data-testid="card-headline"[^>]*>([\s\S]*?)<\/h2>/i,
 	);
@@ -43,7 +46,9 @@ function parseCard(cardHtml: string): NewsItem | null {
 		cardHtml.match(
 			/data-testid="card-description"[^>]*>([\s\S]*?)<\/p>/i,
 		) ??
-		cardHtml.match(/<p class="sc-ed3b7d3e-5[^"]*"[^>]*>([\s\S]*?)<\/p>/i);
+		cardHtml.match(
+			/data-testid="card-headline"[^>]*>[\s\S]*?<\/h2>[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/i,
+		);
 
 	return {
 		title: stripTags(headlineMatch[1]),
