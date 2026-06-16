@@ -6,11 +6,11 @@ import { WorldNews } from "./world-news";
 export function HomePage() {
 	return (
 		<div className="min-h-screen bg-background text-foreground">
-			<header className=" border-black/10 dark:border-white/10">
+			{/* <header className=" border-black/10 dark:border-white/10">
 				<div className="w-full px-4 py-6 sm:px-8 lg:px-10">
 					<h1 className="text-xl font-semibold tracking-tight">Blooom</h1>
 				</div>
-			</header>
+			</header> */}
 
 			<main className="w-full px-4 py-8 sm:px-8 lg:px-10">
 				<div className="grid gap-12 2xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,2.1fr)]">
