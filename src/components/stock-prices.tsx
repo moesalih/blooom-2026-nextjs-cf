@@ -73,7 +73,7 @@ type TopStockRowData = {
 };
 
 async function fetchTopStocks(): Promise<TopStockRowData[]> {
-	const response = await fetch("/api/stocks/top-10");
+	const response = await fetch("/api/stocks/top-companies");
 
 	if (!response.ok) {
 		throw new Error("Failed to load top stocks");
@@ -114,7 +114,7 @@ const TOP_STOCK_SKELETON_COUNT = 10;
 
 export function TopStockPrices() {
 	const { data, isPending, isError } = useQuery({
-		queryKey: ["stocks", "top-10"],
+		queryKey: ["stocks", "top-companies"],
 		queryFn: fetchTopStocks,
 	});
 

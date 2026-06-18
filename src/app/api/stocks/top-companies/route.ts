@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
 	try {
-		const companies = await fetchTopCompaniesFromSite(10);
+		const companies = await fetchTopCompaniesFromSite(12);
 
 		return NextResponse.json(companies, {
 			headers: {
@@ -15,7 +15,7 @@ export async function GET() {
 			error instanceof Error
 				? error.message
 				: "Failed to fetch top companies";
-		console.error("[Top-10] Request failed", { message });
+		console.error("[Top-companies] Request failed", { message });
 		return NextResponse.json({ error: message }, { status: 502 });
 	}
 }
