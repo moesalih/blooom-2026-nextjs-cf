@@ -1,4 +1,5 @@
 const COMPANIES_MARKETCAP_URL = "https://companiesmarketcap.com/";
+const ONE_TRILLION = 1_000_000_000_000;
 
 export type ParsedTopCompany = {
 	name: string;
@@ -14,15 +15,11 @@ function symbolStartsWithDigit(symbol: string): boolean {
 
 export function parseTopCompanies(
 	html: string,
-	limit = 10,
+	minMarketCap = ONE_TRILLION,
 ): ParsedTopCompany[] {
 	const companies: ParsedTopCompany[] = [];
 
 	for (const rowMatch of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
-		if (companies.length >= limit) {
-			break;
-		}
-
 		const fullRow = rowMatch[0];
 		const rowHtml = rowMatch[1];
 
@@ -55,6 +52,10 @@ export function parseTopCompanies(
 			continue;
 		}
 
+		if (marketCap < minMarketCap) {
+			break;
+		}
+
 		const symbol = symbolMatch[1].trim();
 		if (symbolStartsWithDigit(symbol)) {
 			continue;
@@ -81,7 +82,7 @@ export function parseTopCompanies(
 }
 
 export async function fetchTopCompaniesFromSite(
-	limit = 10,
+	minMarketCap = ONE_TRILLION,
 ): Promise<ParsedTopCompany[]> {
 	const response = await fetch(COMPANIES_MARKETCAP_URL, {
 		headers: {
@@ -98,7 +99,7 @@ export async function fetchTopCompaniesFromSite(
 	}
 
 	const html = await response.text();
-	const companies = parseTopCompanies(html, limit);
+	const companies = parseTopCompanies(html, minMarketCap);
 
 	if (companies.length === 0) {
 		throw new Error("No companies found in CompaniesMarketCap HTML");

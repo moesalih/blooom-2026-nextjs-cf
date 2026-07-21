@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
 	try {
-		const companies = await fetchTopCompaniesFromSite(12);
+		const companies = await fetchTopCompaniesFromSite();
 
 		return NextResponse.json(companies, {
 			headers: {
