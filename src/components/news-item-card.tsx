@@ -1,4 +1,4 @@
-import type { NewsItem } from "@/lib/news-item";
+import type { NewsItem } from "@/lib/news-item"
 
 export function NewsItemCard({ item }: { item: NewsItem }) {
 	return (
@@ -24,7 +24,7 @@ export function NewsItemCard({ item }: { item: NewsItem }) {
 				href={item.linkUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				className="mt-1 block text-lg font-medium leading-snug text-foreground visited:text-[#8b8b8b] dark:visited:text-[#7a7a7a] hover:underline"
+				className="mt-1 block text-lg font-medium leading-snug text-foreground visited:text-[#555] dark:visited:text-[#aaa] hover:underline"
 			>
 				{item.title}
 			</a>
@@ -34,5 +34,5 @@ export function NewsItemCard({ item }: { item: NewsItem }) {
 				</p>
 			) : null}
 		</li>
-	);
+	)
 }
