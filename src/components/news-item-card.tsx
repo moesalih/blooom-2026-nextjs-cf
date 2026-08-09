@@ -24,7 +24,7 @@ export function NewsItemCard({ item }: { item: NewsItem }) {
 				href={item.linkUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				className="mt-1 block text-lg font-medium leading-snug hover:underline"
+				className="mt-1 block text-lg font-medium leading-snug text-foreground visited:text-[#8b8b8b] dark:visited:text-[#7a7a7a] hover:underline"
 			>
 				{item.title}
 			</a>
