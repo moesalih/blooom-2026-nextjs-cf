@@ -1,5 +1,6 @@
 type CnbcFinancialQuoteJsonLd = {
 	"@type"?: string;
+	name?: string;
 	tickerSymbol?: string;
 	price?: string;
 	priceChangePercent?: string;
@@ -7,6 +8,7 @@ type CnbcFinancialQuoteJsonLd = {
 
 export type CnbcQuote = {
 	symbol: string;
+	name: string | null;
 	price: number | null;
 	changePercent: number | null;
 	marketCap: number | null;
@@ -65,6 +67,12 @@ function parseMarketCapFromHtml(html: string): number | null {
 	return null;
 }
 
+function parseNameFromHtml(html: string): string | null {
+	const match = html.match(/class="QuoteStrip-name">([^<]+)<\/span>/);
+	const name = match?.[1]?.trim();
+	return name ? name : null;
+}
+
 function parseFinancialQuoteJsonLd(
 	html: string,
 ): Omit<CnbcQuote, "marketCap"> | null {
@@ -82,8 +90,11 @@ function parseFinancialQuoteJsonLd(
 			continue;
 		}
 
+		const name = data.name?.trim();
+
 		return {
 			symbol: (data.tickerSymbol ?? "").toUpperCase(),
+			name: name ? name : null,
 			price: parseNumber(data.price),
 			changePercent: parseNumber(data.priceChangePercent),
 		};
@@ -112,10 +123,12 @@ export function parseCnbcQuoteHtml(
 	const normalizedSymbol = symbol.toUpperCase();
 	const fromJsonLd = parseFinancialQuoteJsonLd(html);
 	const marketCap = parseMarketCapFromHtml(html);
+	const name = fromJsonLd?.name ?? parseNameFromHtml(html);
 
 	if (fromJsonLd?.price != null && fromJsonLd.changePercent != null) {
 		return {
 			symbol: fromJsonLd.symbol || normalizedSymbol,
+			name,
 			price: fromJsonLd.price,
 			changePercent: fromJsonLd.changePercent,
 			marketCap,
@@ -126,6 +139,7 @@ export function parseCnbcQuoteHtml(
 
 	return {
 		symbol: normalizedSymbol,
+		name,
 		price: fromJsonLd?.price ?? fromQuoteStrip.price,
 		changePercent:
 			fromJsonLd?.changePercent ?? fromQuoteStrip.changePercent,
