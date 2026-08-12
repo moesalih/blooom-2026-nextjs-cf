@@ -15,6 +15,8 @@ export type PositionRow = {
 	changePercent: number | null;
 	/** USD market value */
 	value: number | null;
+	/** USD day change (from previous close via change %) */
+	changeValue: number | null;
 	isPending: boolean;
 	isError: boolean;
 };
@@ -25,6 +27,27 @@ export type AccountGroup = {
 	/** USD account total */
 	total: number | null;
 };
+
+/** Day P&L in the same units as value, derived from change %. */
+export function changeValueFromPercent(
+	value: number | null,
+	changePercent: number | null,
+): number | null {
+	if (value == null || changePercent == null) {
+		return null;
+	}
+	if (!Number.isFinite(value) || !Number.isFinite(changePercent)) {
+		return null;
+	}
+
+	const ratio = changePercent / 100;
+	const previousFactor = 1 + ratio;
+	if (previousFactor === 0) {
+		return null;
+	}
+
+	return (value * ratio) / previousFactor;
+}
 
 export function buildPositionRows(
 	positions: BasketPosition[],
@@ -44,6 +67,7 @@ export function buildPositionRows(
 			price,
 			changePercent,
 			value,
+			changeValue: changeValueFromPercent(value, changePercent),
 			isPending: quote?.isPending ?? false,
 			isError: quote?.isError ?? false,
 		};

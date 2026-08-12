@@ -35,14 +35,15 @@ export function BasketPositionList({
 				<div className="w-20 shrink-0 text-right sm:w-24">Amount</div>
 				<div className="w-20 shrink-0 text-right sm:w-24">Price</div>
 				<div className="w-16 shrink-0 text-right sm:w-20">Change</div>
+				<div className="w-20 shrink-0 text-right sm:w-28">Gain</div>
 				<div className="w-28 shrink-0 text-right sm:w-36">Value</div>
 			</div>
 
-			<div className="divide-y divide-black/10 dark:divide-white/10">
+			<div>
 				{accountGroups.map((group) => (
 					<section
 						key={group.account.id}
-						className="py-5 first:pt-2 last:pb-0"
+						className="border-t border-black/10 py-5 last:pb-0 dark:border-white/10"
 					>
 						<div className="mb-2 flex items-baseline justify-between gap-4 px-1 pb-1">
 							<h2 className="text-2xl font-semibold tracking-tight">
@@ -67,6 +68,7 @@ export function BasketPositionList({
 								position,
 								price,
 								changePercent,
+								changeValue,
 								value,
 								isPending,
 								isError,
@@ -113,6 +115,28 @@ export function BasketPositionList({
 									</div>
 
 									<div
+										className={`w-20 shrink-0 text-right tabular-nums sm:w-28 ${isPending ||
+												isError ||
+												isFxError ||
+												isDisplayRatePending
+												? "text-muted-foreground"
+												: changeColorClass(changeValue)
+											}`}
+									>
+										{isPending || isDisplayRatePending ? (
+											<span className="inline-block h-4 w-16 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+										) : isError ? (
+											"—"
+										) : (
+											formatPortfolioValue(
+												changeValue,
+												displayRate,
+												currencySymbol,
+											)
+										)}
+									</div>
+
+									<div
 										className={`w-28 shrink-0 text-right tabular-nums sm:w-36 ${isPending ||
 												isError ||
 												isFxError ||
@@ -153,6 +177,7 @@ export function BasketPositionListSkeleton() {
 					<span className="inline-block h-4 w-12 shrink-0 animate-pulse rounded bg-black/10 dark:bg-white/10 sm:w-16" />
 					<span className="inline-block h-4 w-14 shrink-0 animate-pulse rounded bg-black/10 dark:bg-white/10 sm:w-20" />
 					<span className="inline-block h-4 w-12 shrink-0 animate-pulse rounded bg-black/10 dark:bg-white/10 sm:w-16" />
+					<span className="inline-block h-4 w-14 shrink-0 animate-pulse rounded bg-black/10 dark:bg-white/10 sm:w-20" />
 					<span className="inline-block h-4 w-16 shrink-0 animate-pulse rounded bg-black/10 dark:bg-white/10 sm:w-20" />
 				</div>
 			))}
