@@ -15,12 +15,22 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
+	type BasketAccount,
 	type BasketPosition,
 	type BasketPositionType,
-	createPositionId,
+	createId,
+	findAccountByName,
 	loadBasket,
+	pruneAccounts,
 	saveBasket,
 } from "@/lib/basket-storage";
 import { fetchCryptoQuote } from "@/lib/coingecko";
@@ -29,10 +39,21 @@ import {
 	formatPrice,
 } from "@/components/price-list";
 
+const NEW_ACCOUNT_VALUE = "__new__";
+
 type AssetQuote = {
 	symbol: string;
 	price: number | null;
 	changePercent: number | null;
+};
+
+type PositionRow = {
+	position: BasketPosition;
+	price: number | null;
+	changePercent: number | null;
+	value: number | null;
+	isPending: boolean;
+	isError: boolean;
 };
 
 async function fetchStockPrice(symbol: string): Promise<AssetQuote> {
@@ -91,12 +112,20 @@ function formatCurrency(value: number | null): string {
 	}).format(value);
 }
 
+function sortByNumericDesc(a: number | null, b: number | null) {
+	if (a == null && b == null) return 0;
+	if (a == null) return 1;
+	if (b == null) return -1;
+	return b - a;
+}
+
 type PositionDialogMode =
 	| { type: "closed" }
 	| { type: "add" }
 	| { type: "edit"; position: BasketPosition };
 
 export function BasketPage() {
+	const [accounts, setAccounts] = useState<BasketAccount[]>([]);
 	const [positions, setPositions] = useState<BasketPosition[]>([]);
 	const [updatedAt, setUpdatedAt] = useState<number | null>(null);
 	const [hydrated, setHydrated] = useState(false);
@@ -104,21 +133,33 @@ export function BasketPage() {
 	const [typeInput, setTypeInput] = useState<BasketPositionType>("stock");
 	const [symbolInput, setSymbolInput] = useState("");
 	const [amountInput, setAmountInput] = useState("");
+	const [accountSelect, setAccountSelect] = useState<string>(NEW_ACCOUNT_VALUE);
+	const [newAccountName, setNewAccountName] = useState("");
 	const [formError, setFormError] = useState<string | null>(null);
 
 	useEffect(() => {
 		const data = loadBasket();
+		setAccounts(data.accounts);
 		setPositions(data.positions);
 		setUpdatedAt(data.updatedAt);
 		setHydrated(true);
 	}, []);
 
-	const persist = useCallback((nextPositions: BasketPosition[]) => {
-		const nextUpdatedAt = Date.now();
-		setPositions(nextPositions);
-		setUpdatedAt(nextUpdatedAt);
-		saveBasket({ positions: nextPositions, updatedAt: nextUpdatedAt });
-	}, []);
+	const persist = useCallback(
+		(nextAccounts: BasketAccount[], nextPositions: BasketPosition[]) => {
+			const prunedAccounts = pruneAccounts(nextAccounts, nextPositions);
+			const nextUpdatedAt = Date.now();
+			setAccounts(prunedAccounts);
+			setPositions(nextPositions);
+			setUpdatedAt(nextUpdatedAt);
+			saveBasket({
+				accounts: prunedAccounts,
+				positions: nextPositions,
+				updatedAt: nextUpdatedAt,
+			});
+		},
+		[],
+	);
 
 	const uniqueAssets = useMemo(() => {
 		const seen = new Set<string>();
@@ -173,42 +214,90 @@ export function BasketPage() {
 		return map;
 	}, [priceQueries, uniqueAssets]);
 
-	const positionValues = useMemo(() => {
-		return positions
-			.map((position) => {
-				const quote = priceByKey.get(
-					quoteKey(position.type, position.symbol),
-				);
-				const price = quote?.price ?? null;
-				const changePercent = quote?.changePercent ?? null;
-				const value =
-					price != null && Number.isFinite(position.amount)
-						? price * position.amount
-						: null;
+	const positionRows = useMemo((): PositionRow[] => {
+		return positions.map((position) => {
+			const quote = priceByKey.get(quoteKey(position.type, position.symbol));
+			const price = quote?.price ?? null;
+			const changePercent = quote?.changePercent ?? null;
+			const value =
+				price != null && Number.isFinite(position.amount)
+					? price * position.amount
+					: null;
+
+			return {
+				position,
+				price,
+				changePercent,
+				value,
+				isPending: quote?.isPending ?? false,
+				isError: quote?.isError ?? false,
+			};
+		});
+	}, [positions, priceByKey]);
+
+	const accountGroups = useMemo(() => {
+		const accountById = new Map(accounts.map((account) => [account.id, account]));
+
+		const groups = accounts
+			.map((account) => {
+				const rows = positionRows
+					.filter((row) => row.position.accountId === account.id)
+					.sort((a, b) => sortByNumericDesc(a.value, b.value));
+
+				let total = 0;
+				let hasValue = false;
+				for (const row of rows) {
+					if (row.value != null) {
+						total += row.value;
+						hasValue = true;
+					}
+				}
 
 				return {
-					position,
-					price,
-					changePercent,
-					value,
-					isPending: quote?.isPending ?? false,
-					isError: quote?.isError ?? false,
+					account,
+					rows,
+					total: hasValue ? total : null,
 				};
 			})
-			.sort((a, b) => {
-				// Highest value first; unknown/pending values sink to the bottom.
-				if (a.value == null && b.value == null) return 0;
-				if (a.value == null) return 1;
-				if (b.value == null) return -1;
-				return b.value - a.value;
+			.filter((group) => group.rows.length > 0)
+			.sort((a, b) => sortByNumericDesc(a.total, b.total));
+
+		// Safety: positions whose account is missing still render.
+		const knownIds = new Set(groups.map((group) => group.account.id));
+		const orphanRows = positionRows.filter(
+			(row) => !knownIds.has(row.position.accountId),
+		);
+
+		if (orphanRows.length > 0) {
+			let total = 0;
+			let hasValue = false;
+			for (const row of orphanRows) {
+				if (row.value != null) {
+					total += row.value;
+					hasValue = true;
+				}
+			}
+
+			groups.push({
+				account: {
+					id: orphanRows[0].position.accountId,
+					name:
+						accountById.get(orphanRows[0].position.accountId)?.name ?? "Account",
+				},
+				rows: orphanRows.sort((a, b) => sortByNumericDesc(a.value, b.value)),
+				total: hasValue ? total : null,
 			});
-	}, [positions, priceByKey]);
+			groups.sort((a, b) => sortByNumericDesc(a.total, b.total));
+		}
+
+		return groups;
+	}, [accounts, positionRows]);
 
 	const total = useMemo(() => {
 		let sum = 0;
 		let hasValue = false;
 
-		for (const row of positionValues) {
+		for (const row of positionRows) {
 			if (row.value != null) {
 				sum += row.value;
 				hasValue = true;
@@ -216,14 +305,18 @@ export function BasketPage() {
 		}
 
 		return hasValue ? sum : null;
-	}, [positionValues]);
+	}, [positionRows]);
 
-	const isAnyPending = positionValues.some((row) => row.isPending);
+	const isAnyPending = positionRows.some((row) => row.isPending);
+	const showNewAccountInput =
+		accounts.length === 0 || accountSelect === NEW_ACCOUNT_VALUE;
 
 	function openAddDialog() {
 		setTypeInput("stock");
 		setSymbolInput("");
 		setAmountInput("");
+		setAccountSelect(accounts[0]?.id ?? NEW_ACCOUNT_VALUE);
+		setNewAccountName("");
 		setFormError(null);
 		setDialog({ type: "add" });
 	}
@@ -232,6 +325,8 @@ export function BasketPage() {
 		setTypeInput(position.type);
 		setSymbolInput(position.symbol);
 		setAmountInput(String(position.amount));
+		setAccountSelect(position.accountId);
+		setNewAccountName("");
 		setFormError(null);
 		setDialog({ type: "edit", position });
 	}
@@ -239,6 +334,35 @@ export function BasketPage() {
 	function closeDialog() {
 		setDialog({ type: "closed" });
 		setFormError(null);
+	}
+
+	function resolveAccount(
+		nextAccounts: BasketAccount[],
+	): { accounts: BasketAccount[]; accountId: string } | { error: string } {
+		if (showNewAccountInput) {
+			const name = newAccountName.trim();
+			if (!name) {
+				return { error: "Enter an account name." };
+			}
+
+			const existing = findAccountByName(nextAccounts, name);
+			if (existing) {
+				return { accounts: nextAccounts, accountId: existing.id };
+			}
+
+			const account: BasketAccount = { id: createId(), name };
+			return { accounts: [...nextAccounts, account], accountId: account.id };
+		}
+
+		if (!accountSelect || accountSelect === NEW_ACCOUNT_VALUE) {
+			return { error: "Select an account." };
+		}
+
+		if (!nextAccounts.some((account) => account.id === accountSelect)) {
+			return { error: "Select an account." };
+		}
+
+		return { accounts: nextAccounts, accountId: accountSelect };
 	}
 
 	function handleSave() {
@@ -259,19 +383,35 @@ export function BasketPage() {
 			return;
 		}
 
+		const accountResult = resolveAccount(accounts);
+		if ("error" in accountResult) {
+			setFormError(accountResult.error);
+			return;
+		}
+
+		const { accounts: nextAccounts, accountId } = accountResult;
+
 		if (dialog.type === "edit") {
 			persist(
+				nextAccounts,
 				positions.map((position) =>
 					position.id === dialog.position.id
-						? { ...position, type: typeInput, symbol, amount }
+						? {
+								...position,
+								accountId,
+								type: typeInput,
+								symbol,
+								amount,
+							}
 						: position,
 				),
 			);
 		} else {
-			persist([
+			persist(nextAccounts, [
 				...positions,
 				{
-					id: createPositionId(),
+					id: createId(),
+					accountId,
 					type: typeInput,
 					symbol,
 					amount,
@@ -287,7 +427,10 @@ export function BasketPage() {
 			return;
 		}
 
-		persist(positions.filter((position) => position.id !== dialog.position.id));
+		persist(
+			accounts,
+			positions.filter((position) => position.id !== dialog.position.id),
+		);
 		closeDialog();
 	}
 
@@ -337,7 +480,7 @@ export function BasketPage() {
 					</div>
 				) : (
 					<div>
-						<div className="mb-1 flex items-center gap-4 px-1 text-xs text-muted-foreground">
+						<div className="mb-4 flex items-center gap-4 px-1 text-xs text-muted-foreground">
 							<div className="min-w-0 flex-1">Symbol</div>
 							<div className="w-16 shrink-0 text-right sm:w-20">Change</div>
 							<div className="w-20 shrink-0 text-right sm:w-24">Price</div>
@@ -345,80 +488,98 @@ export function BasketPage() {
 							<div className="w-24 shrink-0 text-right sm:w-28">Value</div>
 						</div>
 
-						{positionValues.map(
-							({
-								position,
-								price,
-								changePercent,
-								value,
-								isPending,
-								isError,
-							}) => (
-								<button
-									key={position.id}
-									type="button"
-									onClick={() => openEditDialog(position)}
-									className="flex w-full items-center gap-4 border-b border-black/5 px-1 py-3 text-left transition-colors hover:bg-muted/40 dark:border-white/5"
-								>
-									<div className="min-w-0 flex-1 font-medium tracking-wide">
-										{position.symbol}
-									</div>
-
-									<div
-										className={`w-16 shrink-0 text-right tabular-nums sm:w-20 ${
-											isPending || isError
-												? "text-muted-foreground"
-												: changeColorClass(changePercent)
-										}`}
-									>
-										{isPending ? (
-											<span className="inline-block h-4 w-12 animate-pulse rounded bg-black/10 dark:bg-white/10" />
-										) : isError ? (
-											"—"
+						<div className="divide-y divide-black/10 dark:divide-white/10">
+						{accountGroups.map((group) => (
+							<section key={group.account.id} className="py-5 first:pt-2 last:pb-0">
+								<div className="flex items-baseline justify-between gap-4 px-1 pb-1">
+									<h2 className="text-lg font-semibold tracking-tight">
+										{group.account.name}
+									</h2>
+									<p className="text-lg font-semibold tabular-nums">
+										{group.rows.some((row) => row.isPending) ? (
+											<span className="inline-block h-5 w-24 animate-pulse rounded bg-black/10 dark:bg-white/10" />
 										) : (
-											formatChangePercent(changePercent)
+											formatCurrency(group.total)
 										)}
-									</div>
+									</p>
+								</div>
 
-									<div
-										className={`w-20 shrink-0 text-right tabular-nums sm:w-24 ${
-											isPending || isError
-												? "text-muted-foreground"
-												: ""
-										}`}
-									>
-										{isPending ? (
-											<span className="inline-block h-4 w-14 animate-pulse rounded bg-black/10 dark:bg-white/10" />
-										) : isError ? (
-											"—"
-										) : (
-											formatPrice(price)
-										)}
-									</div>
+								{group.rows.map(
+									({
+										position,
+										price,
+										changePercent,
+										value,
+										isPending,
+										isError,
+									}) => (
+										<button
+											key={position.id}
+											type="button"
+											onClick={() => openEditDialog(position)}
+											className="flex w-full items-center gap-4 px-1 py-2.5 text-left transition-colors hover:bg-muted/40"
+										>
+											<div className="min-w-0 flex-1 font-medium tracking-wide">
+												{position.symbol}
+											</div>
 
-									<div className="w-20 shrink-0 text-right tabular-nums sm:w-24">
-										{position.amount.toLocaleString("en-US", {
-											maximumFractionDigits: 8,
-										})}
-									</div>
+											<div
+												className={`w-16 shrink-0 text-right tabular-nums sm:w-20 ${
+													isPending || isError
+														? "text-muted-foreground"
+														: changeColorClass(changePercent)
+												}`}
+											>
+												{isPending ? (
+													<span className="inline-block h-4 w-12 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+												) : isError ? (
+													"—"
+												) : (
+													formatChangePercent(changePercent)
+												)}
+											</div>
 
-									<div
-										className={`w-24 shrink-0 text-right tabular-nums sm:w-28 ${
-											isPending || isError
-												? "text-muted-foreground"
-												: "font-medium"
-										}`}
-									>
-										{isPending ? (
-											<span className="inline-block h-4 w-16 animate-pulse rounded bg-black/10 dark:bg-white/10" />
-										) : (
-											formatCurrency(value)
-										)}
-									</div>
-								</button>
-							),
-						)}
+											<div
+												className={`w-20 shrink-0 text-right tabular-nums sm:w-24 ${
+													isPending || isError
+														? "text-muted-foreground"
+														: ""
+												}`}
+											>
+												{isPending ? (
+													<span className="inline-block h-4 w-14 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+												) : isError ? (
+													"—"
+												) : (
+													formatPrice(price)
+												)}
+											</div>
 
+											<div className="w-20 shrink-0 text-right tabular-nums sm:w-24">
+												{position.amount.toLocaleString("en-US", {
+													maximumFractionDigits: 8,
+												})}
+											</div>
+
+											<div
+												className={`w-24 shrink-0 text-right tabular-nums sm:w-28 ${
+													isPending || isError
+														? "text-muted-foreground"
+														: "font-medium"
+												}`}
+											>
+												{isPending ? (
+													<span className="inline-block h-4 w-16 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+												) : (
+													formatCurrency(value)
+												)}
+											</div>
+										</button>
+									),
+								)}
+							</section>
+						))}
+						</div>
 					</div>
 				)}
 
@@ -456,7 +617,7 @@ export function BasketPage() {
 						</DialogTitle>
 						<DialogDescription>
 							{isEditing
-								? "Update this holding’s type, symbol, or amount."
+								? "Update this holding’s account, type, symbol, or amount."
 								: "Add a stock or crypto and how much you hold."}
 						</DialogDescription>
 					</DialogHeader>
@@ -468,6 +629,57 @@ export function BasketPage() {
 						}}
 					>
 						<FieldGroup className="gap-4 py-2">
+							<Field>
+								<FieldLabel>Account</FieldLabel>
+								{accounts.length > 0 ? (
+									<Select
+										value={accountSelect}
+										onValueChange={(value) => {
+											if (typeof value === "string") {
+												setAccountSelect(value);
+												setFormError(null);
+											}
+										}}
+									>
+										<SelectTrigger className="w-full">
+											<SelectValue placeholder="Select account">
+												{(value: string | null) => {
+													if (value === NEW_ACCOUNT_VALUE) {
+														return "New account…";
+													}
+													return (
+														accounts.find((account) => account.id === value)
+															?.name ?? "Select account"
+													);
+												}}
+											</SelectValue>
+										</SelectTrigger>
+										<SelectContent>
+											{accounts.map((account) => (
+												<SelectItem key={account.id} value={account.id}>
+													{account.name}
+												</SelectItem>
+											))}
+											<SelectItem value={NEW_ACCOUNT_VALUE}>
+												New account…
+											</SelectItem>
+										</SelectContent>
+									</Select>
+								) : null}
+								{showNewAccountInput ? (
+									<Input
+										id="basket-account-name"
+										value={newAccountName}
+										onChange={(event) => {
+											setNewAccountName(event.target.value);
+											setFormError(null);
+										}}
+										placeholder="e.g. Fidelity"
+										autoComplete="off"
+										className={accounts.length > 0 ? "mt-2" : undefined}
+									/>
+								) : null}
+							</Field>
 							<Field>
 								<FieldLabel>Type</FieldLabel>
 								<ToggleGroup
