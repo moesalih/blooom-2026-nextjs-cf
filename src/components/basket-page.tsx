@@ -297,26 +297,21 @@ export function BasketPage() {
 	return (
 		<div className="min-h-screen bg-background text-foreground">
 			<main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
-				<div className="mb-2 flex items-center justify-between gap-4">
+				<div className="mb-8 flex items-baseline justify-between gap-4 px-1">
 					<h1 className="text-xl font-semibold tracking-tight">Basket</h1>
-					<Button size="sm" onClick={openAddDialog}>
-						<PlusIcon data-icon="inline-start" />
-						Add
-					</Button>
-				</div>
-
-				<div className="mb-8">
-					{!hydrated || (positions.length > 0 && isAnyPending) ? (
-						<div className="h-9 w-36 animate-pulse rounded bg-black/10 dark:bg-white/10" />
-					) : positions.length === 0 ? (
-						<p className="text-3xl font-semibold tracking-tight tabular-nums text-muted-foreground">
-							—
-						</p>
-					) : (
-						<p className="text-3xl font-semibold tracking-tight tabular-nums">
-							{formatCurrency(total)}
-						</p>
-					)}
+					<div className="text-right">
+						{!hydrated || (positions.length > 0 && isAnyPending) ? (
+							<div className="ml-auto h-8 w-28 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+						) : positions.length === 0 ? (
+							<p className="text-2xl font-semibold tracking-tight tabular-nums text-muted-foreground">
+								—
+							</p>
+						) : (
+							<p className="text-2xl font-semibold tracking-tight tabular-nums">
+								{formatCurrency(total)}
+							</p>
+						)}
+					</div>
 				</div>
 
 				{!hydrated ? (
@@ -339,10 +334,6 @@ export function BasketPage() {
 						<p className="text-sm text-muted-foreground">
 							No positions yet. Add a stock or crypto to get started.
 						</p>
-						<Button className="mt-4" size="sm" onClick={openAddDialog}>
-							<PlusIcon data-icon="inline-start" />
-							Add position
-						</Button>
 					</div>
 				) : (
 					<div>
@@ -428,19 +419,26 @@ export function BasketPage() {
 							),
 						)}
 
-						{updatedAt != null ? (
-							<p className="mt-4 text-xs text-muted-foreground">
-								Positions updated{" "}
-								{new Date(updatedAt).toLocaleString("en-US", {
-									month: "short",
-									day: "numeric",
-									hour: "numeric",
-									minute: "2-digit",
-								})}
-							</p>
-						) : null}
 					</div>
 				)}
+
+				<div className="mt-6 flex items-center justify-between gap-4">
+					<Button variant="outline" size="sm" onClick={openAddDialog}>
+						<PlusIcon data-icon="inline-start" />
+						Add
+					</Button>
+					{updatedAt != null ? (
+						<p className="text-xs text-muted-foreground">
+							Positions updated{" "}
+							{new Date(updatedAt).toLocaleString("en-US", {
+								month: "short",
+								day: "numeric",
+								hour: "numeric",
+								minute: "2-digit",
+							})}
+						</p>
+					) : null}
+				</div>
 			</main>
 
 			<Dialog
