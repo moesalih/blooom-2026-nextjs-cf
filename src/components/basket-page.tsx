@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon, SettingsIcon } from "lucide-react";
+import { PlusIcon, SettingsIcon, ShoppingBasketIcon } from "lucide-react";
 
 import { BasketPositionDialog } from "@/components/basket/position-dialog";
 import {
@@ -50,17 +50,19 @@ export function BasketPage() {
 	return (
 		<div className="min-h-screen bg-background text-foreground">
 			<main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
-				<div className="mb-8 flex items-baseline justify-between gap-4 px-1">
-					<h1 className="text-xl font-semibold tracking-tight">Basket</h1>
+				<div className="mb-8 flex items-center justify-between gap-4 px-1">
+					<h1 className="text-xl font-semibold tracking-tight">
+						<ShoppingBasketIcon className="size-8" aria-label="Basket" />
+					</h1>
 					<div className="text-right">
 						{!hydrated || (positions.length > 0 && isAnyPending) ? (
-							<div className="ml-auto h-8 w-28 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+							<div className="ml-auto h-10 w-40 animate-pulse rounded bg-black/10 dark:bg-white/10" />
 						) : positions.length === 0 ? (
-							<p className="text-2xl font-semibold tracking-tight tabular-nums text-muted-foreground">
+							<p className="text-4xl font-semibold tracking-tight tabular-nums text-muted-foreground">
 								—
 							</p>
 						) : (
-							<p className="text-2xl font-semibold tracking-tight tabular-nums">
+							<p className="text-4xl font-semibold tracking-tight tabular-nums">
 								{formatPortfolioValue(total, displayRate, currencySymbol)}
 							</p>
 						)}
@@ -88,7 +90,7 @@ export function BasketPage() {
 					/>
 				)}
 
-				<div className="mt-6 flex items-center justify-between gap-4">
+				<div className="mt-10 flex items-center justify-between gap-4">
 					<div className="flex items-center gap-2">
 						<Button
 							variant="outline"
