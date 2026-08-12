@@ -32,9 +32,9 @@ export function BasketPositionList({
 		<div>
 			<div className="mb-4 flex items-center gap-4 px-1 text-xs text-muted-foreground">
 				<div className="min-w-0 flex-1">Symbol</div>
-				<div className="w-16 shrink-0 text-right sm:w-20">Change</div>
-				<div className="w-20 shrink-0 text-right sm:w-24">Price</div>
 				<div className="w-20 shrink-0 text-right sm:w-24">Amount</div>
+				<div className="w-20 shrink-0 text-right sm:w-24">Price</div>
+				<div className="w-16 shrink-0 text-right sm:w-20">Change</div>
 				<div className="w-28 shrink-0 text-right sm:w-36">Value</div>
 			</div>
 
@@ -81,6 +81,22 @@ export function BasketPositionList({
 										{position.symbol}
 									</div>
 
+									<div className="w-20 shrink-0 text-right tabular-nums text-muted-foreground sm:w-24">
+										{position.amount.toLocaleString("en-US", {
+											maximumFractionDigits: 8,
+										})}
+									</div>
+
+									<div className="w-20 shrink-0 text-right tabular-nums text-muted-foreground sm:w-24">
+										{isPending ? (
+											<span className="inline-block h-4 w-14 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+										) : isError ? (
+											"—"
+										) : (
+											formatPrice(price)
+										)}
+									</div>
+
 									<div
 										className={`w-16 shrink-0 text-right tabular-nums sm:w-20 ${isPending || isError
 												? "text-muted-foreground"
@@ -94,25 +110,6 @@ export function BasketPositionList({
 										) : (
 											formatChangePercent(changePercent)
 										)}
-									</div>
-
-									<div
-										className={`w-20 shrink-0 text-right tabular-nums sm:w-24 ${isPending || isError ? "text-muted-foreground" : ""
-											}`}
-									>
-										{isPending ? (
-											<span className="inline-block h-4 w-14 animate-pulse rounded bg-black/10 dark:bg-white/10" />
-										) : isError ? (
-											"—"
-										) : (
-											formatPrice(price)
-										)}
-									</div>
-
-									<div className="w-20 shrink-0 text-right tabular-nums sm:w-24">
-										{position.amount.toLocaleString("en-US", {
-											maximumFractionDigits: 8,
-										})}
 									</div>
 
 									<div
