@@ -7,11 +7,13 @@ import { BasketPositionDialog } from "@/components/basket/position-dialog";
 import {
 	BasketPositionList,
 	BasketPositionListSkeleton,
+	type BasketMobileColumnView,
 } from "@/components/basket/position-list";
 import { BasketSettingsDialog } from "@/components/basket/settings-dialog";
 import { useBasketState } from "@/components/basket/use-basket-state";
 import { useBasketValuations } from "@/components/basket/use-basket-valuations";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
 	type BasketPosition,
 	createId,
@@ -46,11 +48,15 @@ export function BasketPage() {
 		open: false,
 	});
 	const [settingsOpen, setSettingsOpen] = useState(false);
+	const [mobileColumnView, setMobileColumnView] =
+		useState<BasketMobileColumnView>("value");
 
 	return (
 		<div className="min-h-screen bg-background text-foreground">
 			<main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
-				<div className="mb-8 flex items-center justify-between gap-4 px-1">
+				<div
+					className={`flex items-center justify-between gap-4 px-1 ${hydrated && positions.length > 0 ? "mb-0 md:mb-8" : "mb-8"}`}
+				>
 					<h1 className="text-xl font-semibold tracking-tight">
 						<ShoppingBasketIcon className="size-8" aria-label="Basket" />
 					</h1>
@@ -69,6 +75,33 @@ export function BasketPage() {
 					</div>
 				</div>
 
+				{hydrated && positions.length > 0 ? (
+					<ToggleGroup
+						value={[mobileColumnView]}
+						onValueChange={(values) => {
+							const next = values[0];
+							if (next === "value" || next === "change") {
+								setMobileColumnView(next);
+							}
+						}}
+						variant="outline"
+						size="sm"
+						spacing={0}
+						className="my-6 ml-auto px-1 md:hidden"
+						aria-label="Column view"
+					>
+						<ToggleGroupItem value="value" aria-label="Amount and value">
+							$
+						</ToggleGroupItem>
+						<ToggleGroupItem
+							value="change"
+							aria-label="Price, change, and gain"
+						>
+							+/-
+						</ToggleGroupItem>
+					</ToggleGroup>
+				) : null}
+
 				{!hydrated ? (
 					<BasketPositionListSkeleton />
 				) : positions.length === 0 ? (
@@ -84,6 +117,7 @@ export function BasketPage() {
 						currencySymbol={currencySymbol}
 						isDisplayRatePending={isDisplayRatePending}
 						isFxError={isFxError}
+						mobileColumnView={mobileColumnView}
 						onEditPosition={(position) =>
 							setPositionDialog({ open: true, mode: "edit", position })
 						}

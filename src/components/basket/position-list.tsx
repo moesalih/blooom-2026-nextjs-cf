@@ -10,6 +10,9 @@ import {
 	formatChangePercent,
 	formatPrice,
 } from "@/components/price-list";
+import { cn } from "@/lib/utils";
+
+export type BasketMobileColumnView = "value" | "change";
 
 type BasketPositionListProps = {
 	accountGroups: AccountGroup[];
@@ -17,6 +20,7 @@ type BasketPositionListProps = {
 	currencySymbol: string;
 	isDisplayRatePending: boolean;
 	isFxError: boolean;
+	mobileColumnView: BasketMobileColumnView;
 	onEditPosition: (position: BasketPosition) => void;
 };
 
@@ -26,17 +30,58 @@ export function BasketPositionList({
 	currencySymbol,
 	isDisplayRatePending,
 	isFxError,
+	mobileColumnView,
 	onEditPosition,
 }: BasketPositionListProps) {
+	const hideUnlessValue =
+		mobileColumnView !== "value" ? "max-md:hidden" : undefined;
+	const hideUnlessChange =
+		mobileColumnView !== "change" ? "max-md:hidden" : undefined;
+
 	return (
 		<div>
 			<div className="mb-4 flex items-center gap-4 px-1 text-xs text-muted-foreground">
 				<div className="min-w-0 flex-1">Symbol</div>
-				<div className="w-20 shrink-0 text-right sm:w-24">Amount</div>
-				<div className="w-20 shrink-0 text-right sm:w-24">Price</div>
-				<div className="w-16 shrink-0 text-right sm:w-20">Change</div>
-				<div className="w-20 shrink-0 text-right sm:w-28">Gain</div>
-				<div className="w-28 shrink-0 text-right sm:w-36">Value</div>
+				<div
+					className={cn(
+						"w-20 shrink-0 text-right sm:w-24",
+						hideUnlessValue,
+					)}
+				>
+					Amount
+				</div>
+				<div
+					className={cn(
+						"w-20 shrink-0 text-right sm:w-24",
+						hideUnlessChange,
+					)}
+				>
+					Price
+				</div>
+				<div
+					className={cn(
+						"w-16 shrink-0 text-right sm:w-20",
+						hideUnlessChange,
+					)}
+				>
+					Change
+				</div>
+				<div
+					className={cn(
+						"w-20 shrink-0 text-right sm:w-28",
+						hideUnlessChange,
+					)}
+				>
+					Gain
+				</div>
+				<div
+					className={cn(
+						"w-28 shrink-0 text-right sm:w-36",
+						hideUnlessValue,
+					)}
+				>
+					Value
+				</div>
 			</div>
 
 			<div>
@@ -83,13 +128,23 @@ export function BasketPositionList({
 										{position.symbol}
 									</div>
 
-									<div className="w-20 shrink-0 text-right tabular-nums text-muted-foreground sm:w-24">
+									<div
+										className={cn(
+											"w-20 shrink-0 text-right tabular-nums text-muted-foreground sm:w-24",
+											hideUnlessValue,
+										)}
+									>
 										{position.amount.toLocaleString("en-US", {
 											maximumFractionDigits: 8,
 										})}
 									</div>
 
-									<div className="w-20 shrink-0 text-right tabular-nums text-muted-foreground sm:w-24">
+									<div
+										className={cn(
+											"w-20 shrink-0 text-right tabular-nums text-muted-foreground sm:w-24",
+											hideUnlessChange,
+										)}
+									>
 										{isPending ? (
 											<span className="inline-block h-4 w-14 animate-pulse rounded bg-black/10 dark:bg-white/10" />
 										) : isError ? (
@@ -100,10 +155,13 @@ export function BasketPositionList({
 									</div>
 
 									<div
-										className={`w-16 shrink-0 text-right tabular-nums sm:w-20 ${isPending || isError
+										className={cn(
+											"w-16 shrink-0 text-right tabular-nums sm:w-20",
+											isPending || isError
 												? "text-muted-foreground"
-												: changeColorClass(changePercent)
-											}`}
+												: changeColorClass(changePercent),
+											hideUnlessChange,
+										)}
 									>
 										{isPending ? (
 											<span className="inline-block h-4 w-12 animate-pulse rounded bg-black/10 dark:bg-white/10" />
@@ -115,13 +173,16 @@ export function BasketPositionList({
 									</div>
 
 									<div
-										className={`w-20 shrink-0 text-right tabular-nums sm:w-28 ${isPending ||
+										className={cn(
+											"w-20 shrink-0 text-right tabular-nums sm:w-28",
+											isPending ||
 												isError ||
 												isFxError ||
 												isDisplayRatePending
 												? "text-muted-foreground"
-												: changeColorClass(changeValue)
-											}`}
+												: changeColorClass(changeValue),
+											hideUnlessChange,
+										)}
 									>
 										{isPending || isDisplayRatePending ? (
 											<span className="inline-block h-4 w-16 animate-pulse rounded bg-black/10 dark:bg-white/10" />
@@ -137,13 +198,16 @@ export function BasketPositionList({
 									</div>
 
 									<div
-										className={`w-28 shrink-0 text-right tabular-nums sm:w-36 ${isPending ||
+										className={cn(
+											"w-28 shrink-0 text-right tabular-nums sm:w-36",
+											isPending ||
 												isError ||
 												isFxError ||
 												isDisplayRatePending
 												? "text-muted-foreground"
-												: "font-medium"
-											}`}
+												: "font-medium",
+											hideUnlessValue,
+										)}
 									>
 										{isPending || isDisplayRatePending ? (
 											<span className="inline-block h-4 w-20 animate-pulse rounded bg-black/10 dark:bg-white/10" />
