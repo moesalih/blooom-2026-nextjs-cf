@@ -16,15 +16,19 @@ export type BasketPosition = {
 export type BasketData = {
 	accounts: BasketAccount[];
 	positions: BasketPosition[];
+	/** ISO-style display currency code, e.g. "USD", "CAD". Values calculated in USD, converted for display. */
+	currency: string;
 	updatedAt: number | null;
 };
 
 const STORAGE_KEY = "blooom-basket";
 const DEFAULT_ACCOUNT_NAME = "Main";
+export const DEFAULT_CURRENCY = "USD";
 
 const EMPTY_BASKET: BasketData = {
 	accounts: [],
 	positions: [],
+	currency: DEFAULT_CURRENCY,
 	updatedAt: null,
 };
 
@@ -155,9 +159,24 @@ function normalizeBasket(parsed: Partial<BasketData>): BasketData {
 			? parsed.updatedAt
 			: null;
 
+	// Accept legacy `{ symbol }` shape or a plain string.
+	let currency = DEFAULT_CURRENCY;
+	if (typeof parsed.currency === "string") {
+		currency = parsed.currency.trim().toUpperCase() || DEFAULT_CURRENCY;
+	} else if (
+		parsed.currency != null &&
+		typeof parsed.currency === "object" &&
+		typeof (parsed.currency as { symbol?: unknown }).symbol === "string"
+	) {
+		currency =
+			(parsed.currency as { symbol: string }).symbol.trim().toUpperCase() ||
+			DEFAULT_CURRENCY;
+	}
+
 	return {
 		accounts: pruneAccounts(accounts, positions),
 		positions,
+		currency,
 		updatedAt,
 	};
 }
@@ -186,11 +205,17 @@ export function saveBasket(data: BasketData): void {
 	}
 
 	const accounts = pruneAccounts(data.accounts, data.positions);
+	const currency =
+		typeof data.currency === "string"
+			? data.currency.trim().toUpperCase() || DEFAULT_CURRENCY
+			: DEFAULT_CURRENCY;
+
 	window.localStorage.setItem(
 		STORAGE_KEY,
 		JSON.stringify({
 			accounts,
 			positions: data.positions,
+			currency,
 			updatedAt: data.updatedAt,
 		} satisfies BasketData),
 	);

@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useQueries } from "@tanstack/react-query";
-import { PlusIcon } from "lucide-react";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { PlusIcon, SettingsIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +28,7 @@ import {
 	type BasketPosition,
 	type BasketPositionType,
 	createId,
+	DEFAULT_CURRENCY,
 	findAccountByName,
 	loadBasket,
 	pruneAccounts,
@@ -100,16 +101,53 @@ function changeColorClass(changePercent: number | null): string {
 	return "text-muted-foreground";
 }
 
-function formatCurrency(value: number | null): string {
-	if (value == null || Number.isNaN(value)) {
+async function fetchCurrencyRate(symbol: string): Promise<number> {
+	const upper = symbol.trim().toUpperCase();
+	if (upper === "USD") {
+		return 1;
+	}
+
+	const response = await fetch(`/api/currency/${encodeURIComponent(upper)}`);
+
+	if (!response.ok) {
+		throw new Error("Failed to load currency rate");
+	}
+
+	const json = (await response.json()) as { price?: number | null };
+	if (typeof json.price !== "number" || Number.isNaN(json.price)) {
+		throw new Error("Invalid currency rate");
+	}
+
+	// API returns units of currency per 1 USD.
+	return json.price;
+}
+
+/** Convert a USD value into portfolio currency for display. */
+function formatPortfolioValue(
+	usdValue: number | null,
+	rate: number | null,
+	currencySymbol: string,
+): string {
+	if (usdValue == null || rate == null || Number.isNaN(usdValue) || Number.isNaN(rate)) {
 		return "—";
 	}
-	return new Intl.NumberFormat("en-US", {
-		style: "currency",
-		currency: "USD",
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-	}).format(value);
+
+	const converted = usdValue * rate;
+	const code = currencySymbol.trim().toUpperCase() || "USD";
+
+	try {
+		return new Intl.NumberFormat("en-US", {
+			style: "currency",
+			currency: code,
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+		}).format(converted);
+	} catch {
+		return `${code} ${converted.toLocaleString("en-US", {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+		})}`;
+	}
 }
 
 function sortByNumericDesc(a: number | null, b: number | null) {
@@ -127,39 +165,74 @@ type PositionDialogMode =
 export function BasketPage() {
 	const [accounts, setAccounts] = useState<BasketAccount[]>([]);
 	const [positions, setPositions] = useState<BasketPosition[]>([]);
+	const [currency, setCurrency] = useState(DEFAULT_CURRENCY);
 	const [updatedAt, setUpdatedAt] = useState<number | null>(null);
 	const [hydrated, setHydrated] = useState(false);
 	const [dialog, setDialog] = useState<PositionDialogMode>({ type: "closed" });
+	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [typeInput, setTypeInput] = useState<BasketPositionType>("stock");
 	const [symbolInput, setSymbolInput] = useState("");
 	const [amountInput, setAmountInput] = useState("");
 	const [accountSelect, setAccountSelect] = useState<string>(NEW_ACCOUNT_VALUE);
 	const [newAccountName, setNewAccountName] = useState("");
+	const [currencyInput, setCurrencyInput] = useState(DEFAULT_CURRENCY);
 	const [formError, setFormError] = useState<string | null>(null);
+	const [settingsError, setSettingsError] = useState<string | null>(null);
 
 	useEffect(() => {
 		const data = loadBasket();
 		setAccounts(data.accounts);
 		setPositions(data.positions);
+		setCurrency(data.currency);
 		setUpdatedAt(data.updatedAt);
 		setHydrated(true);
 	}, []);
 
 	const persist = useCallback(
-		(nextAccounts: BasketAccount[], nextPositions: BasketPosition[]) => {
+		(
+			nextAccounts: BasketAccount[],
+			nextPositions: BasketPosition[],
+			nextCurrency: string = currency,
+		) => {
 			const prunedAccounts = pruneAccounts(nextAccounts, nextPositions);
 			const nextUpdatedAt = Date.now();
+			const normalizedCurrency =
+				nextCurrency.trim().toUpperCase() || DEFAULT_CURRENCY;
 			setAccounts(prunedAccounts);
 			setPositions(nextPositions);
+			setCurrency(normalizedCurrency);
 			setUpdatedAt(nextUpdatedAt);
 			saveBasket({
 				accounts: prunedAccounts,
 				positions: nextPositions,
+				currency: normalizedCurrency,
 				updatedAt: nextUpdatedAt,
 			});
 		},
-		[],
+		[currency],
 	);
+
+	const currencySymbol = currency.trim().toUpperCase() || "USD";
+
+	const {
+		data: fxRate = currencySymbol === "USD" ? 1 : undefined,
+		isPending: isFxPending,
+		isError: isFxError,
+	} = useQuery({
+		queryKey: ["currency", currencySymbol] as const,
+		queryFn: () => fetchCurrencyRate(currencySymbol),
+		enabled: hydrated && currencySymbol.length > 0,
+	});
+
+	// Rate used for display; null while loading / on error (non-USD).
+	const displayRate: number | null =
+		currencySymbol === "USD"
+			? 1
+			: typeof fxRate === "number"
+				? fxRate
+				: null;
+	const isDisplayRatePending =
+		currencySymbol !== "USD" && isFxPending && displayRate == null;
 
 	const uniqueAssets = useMemo(() => {
 		const seen = new Set<string>();
@@ -307,9 +380,27 @@ export function BasketPage() {
 		return hasValue ? sum : null;
 	}, [positionRows]);
 
-	const isAnyPending = positionRows.some((row) => row.isPending);
+	const isAnyPending =
+		positionRows.some((row) => row.isPending) || isDisplayRatePending;
 	const showNewAccountInput =
 		accounts.length === 0 || accountSelect === NEW_ACCOUNT_VALUE;
+
+	function openSettings() {
+		setCurrencyInput(currencySymbol);
+		setSettingsError(null);
+		setSettingsOpen(true);
+	}
+
+	function handleSaveSettings() {
+		const symbol = currencyInput.trim().toUpperCase();
+		if (!symbol || !/^[A-Z]{3}$/.test(symbol)) {
+			setSettingsError("Enter a 3-letter currency code (e.g. USD, CAD, EUR).");
+			return;
+		}
+
+		persist(accounts, positions, symbol);
+		setSettingsOpen(false);
+	}
 
 	function openAddDialog() {
 		setTypeInput("stock");
@@ -451,7 +542,7 @@ export function BasketPage() {
 							</p>
 						) : (
 							<p className="text-2xl font-semibold tracking-tight tabular-nums">
-								{formatCurrency(total)}
+								{formatPortfolioValue(total, displayRate, currencySymbol)}
 							</p>
 						)}
 					</div>
@@ -496,10 +587,15 @@ export function BasketPage() {
 										{group.account.name}
 									</h2>
 									<p className="text-lg font-semibold tabular-nums">
-										{group.rows.some((row) => row.isPending) ? (
+										{group.rows.some((row) => row.isPending) ||
+										isDisplayRatePending ? (
 											<span className="inline-block h-5 w-24 animate-pulse rounded bg-black/10 dark:bg-white/10" />
 										) : (
-											formatCurrency(group.total)
+											formatPortfolioValue(
+												group.total,
+												displayRate,
+												currencySymbol,
+											)
 										)}
 									</p>
 								</div>
@@ -563,15 +659,19 @@ export function BasketPage() {
 
 											<div
 												className={`w-24 shrink-0 text-right tabular-nums sm:w-28 ${
-													isPending || isError
+													isPending || isError || isFxError || isDisplayRatePending
 														? "text-muted-foreground"
 														: "font-medium"
 												}`}
 											>
-												{isPending ? (
+												{isPending || isDisplayRatePending ? (
 													<span className="inline-block h-4 w-16 animate-pulse rounded bg-black/10 dark:bg-white/10" />
 												) : (
-													formatCurrency(value)
+													formatPortfolioValue(
+														value,
+														displayRate,
+														currencySymbol,
+													)
 												)}
 											</div>
 										</button>
@@ -584,10 +684,21 @@ export function BasketPage() {
 				)}
 
 				<div className="mt-6 flex items-center justify-between gap-4">
-					<Button variant="outline" size="sm" onClick={openAddDialog}>
-						<PlusIcon data-icon="inline-start" />
-						Add
-					</Button>
+					<div className="flex items-center gap-2">
+						<Button variant="outline" size="sm" onClick={openAddDialog}>
+							<PlusIcon data-icon="inline-start" />
+							Add
+						</Button>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={openSettings}
+							aria-label="Portfolio settings"
+						>
+							<SettingsIcon data-icon="inline-start" />
+							Settings
+						</Button>
+					</div>
 					{updatedAt != null ? (
 						<p className="text-xs text-muted-foreground">
 							Positions updated{" "}
@@ -754,6 +865,73 @@ export function BasketPage() {
 								Cancel
 							</Button>
 							<Button type="submit">{isEditing ? "Save" : "Add"}</Button>
+						</DialogFooter>
+					</form>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog
+				open={settingsOpen}
+				onOpenChange={(open) => {
+					if (!open) {
+						setSettingsOpen(false);
+						setSettingsError(null);
+					}
+				}}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Portfolio settings</DialogTitle>
+						<DialogDescription>
+							Choose the currency used to display portfolio values. Positions are
+							still priced in USD, then converted.
+						</DialogDescription>
+					</DialogHeader>
+
+					<form
+						onSubmit={(event) => {
+							event.preventDefault();
+							handleSaveSettings();
+						}}
+					>
+						<FieldGroup className="gap-4 py-2">
+							<Field>
+								<FieldLabel htmlFor="basket-currency">Currency</FieldLabel>
+								<Input
+									id="basket-currency"
+									value={currencyInput}
+									onChange={(event) => {
+										setCurrencyInput(event.target.value.toUpperCase());
+										setSettingsError(null);
+									}}
+									placeholder="USD"
+									autoComplete="off"
+									autoCapitalize="characters"
+									spellCheck={false}
+									maxLength={3}
+								/>
+								<p className="text-xs text-muted-foreground">
+									3-letter code, e.g. USD, CAD, EUR, GBP. Rate is units per 1
+									USD.
+								</p>
+							</Field>
+							{settingsError ? (
+								<p className="text-sm text-destructive">{settingsError}</p>
+							) : null}
+						</FieldGroup>
+
+						<DialogFooter className="mt-2">
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => {
+									setSettingsOpen(false);
+									setSettingsError(null);
+								}}
+							>
+								Cancel
+							</Button>
+							<Button type="submit">Save</Button>
 						</DialogFooter>
 					</form>
 				</DialogContent>
