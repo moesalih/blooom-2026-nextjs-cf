@@ -1,5 +1,8 @@
+export type BasketPositionType = "stock" | "crypto";
+
 export type BasketPosition = {
 	id: string;
+	type: BasketPositionType;
 	symbol: string;
 	amount: number;
 };
@@ -16,18 +19,41 @@ const EMPTY_BASKET: BasketData = {
 	updatedAt: null,
 };
 
+function isValidType(value: unknown): value is BasketPositionType {
+	return value === "stock" || value === "crypto";
+}
+
 function isValidPosition(value: unknown): value is BasketPosition {
 	if (value == null || typeof value !== "object") {
 		return false;
 	}
 
-	const position = value as Partial<BasketPosition>;
-	return (
-		typeof position.id === "string" &&
-		typeof position.symbol === "string" &&
-		typeof position.amount === "number" &&
-		Number.isFinite(position.amount)
-	);
+	const position = value as Partial<BasketPosition> & { type?: unknown };
+
+	if (
+		typeof position.id !== "string" ||
+		typeof position.symbol !== "string" ||
+		typeof position.amount !== "number" ||
+		!Number.isFinite(position.amount)
+	) {
+		return false;
+	}
+
+	// Legacy positions without type default to stock.
+	if (position.type == null) {
+		return true;
+	}
+
+	return isValidType(position.type);
+}
+
+function normalizePosition(value: BasketPosition): BasketPosition {
+	return {
+		id: value.id,
+		type: isValidType(value.type) ? value.type : "stock",
+		symbol: value.symbol,
+		amount: value.amount,
+	};
 }
 
 export function loadBasket(): BasketData {
@@ -43,7 +69,7 @@ export function loadBasket(): BasketData {
 
 		const parsed = JSON.parse(raw) as Partial<BasketData>;
 		const positions = Array.isArray(parsed.positions)
-			? parsed.positions.filter(isValidPosition)
+			? parsed.positions.filter(isValidPosition).map(normalizePosition)
 			: [];
 		const updatedAt =
 			typeof parsed.updatedAt === "number" && Number.isFinite(parsed.updatedAt)

@@ -15,24 +15,27 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
 	type BasketPosition,
+	type BasketPositionType,
 	createPositionId,
 	loadBasket,
 	saveBasket,
 } from "@/lib/basket-storage";
+import { fetchCryptoQuote } from "@/lib/coingecko";
 import {
 	formatChangePercent,
 	formatPrice,
 } from "@/components/price-list";
 
-type StockQuote = {
+type AssetQuote = {
 	symbol: string;
 	price: number | null;
 	changePercent: number | null;
 };
 
-async function fetchStockPrice(symbol: string): Promise<StockQuote> {
+async function fetchStockPrice(symbol: string): Promise<AssetQuote> {
 	const response = await fetch(`/api/stocks/${encodeURIComponent(symbol)}`);
 
 	if (!response.ok) {
@@ -57,6 +60,10 @@ async function fetchStockPrice(symbol: string): Promise<StockQuote> {
 				? json.changePercent
 				: null,
 	};
+}
+
+function quoteKey(type: BasketPositionType, symbol: string): string {
+	return `${type}:${symbol.toUpperCase()}`;
 }
 
 function changeColorClass(changePercent: number | null): string {
@@ -94,6 +101,7 @@ export function BasketPage() {
 	const [updatedAt, setUpdatedAt] = useState<number | null>(null);
 	const [hydrated, setHydrated] = useState(false);
 	const [dialog, setDialog] = useState<PositionDialogMode>({ type: "closed" });
+	const [typeInput, setTypeInput] = useState<BasketPositionType>("stock");
 	const [symbolInput, setSymbolInput] = useState("");
 	const [amountInput, setAmountInput] = useState("");
 	const [formError, setFormError] = useState<string | null>(null);
@@ -112,27 +120,36 @@ export function BasketPage() {
 		saveBasket({ positions: nextPositions, updatedAt: nextUpdatedAt });
 	}, []);
 
-	const uniqueSymbols = useMemo(
-		() =>
-			[
-				...new Set(
-					positions
-						.map((position) => position.symbol.trim().toUpperCase())
-						.filter(Boolean),
-				),
-			],
-		[positions],
-	);
+	const uniqueAssets = useMemo(() => {
+		const seen = new Set<string>();
+		const assets: { type: BasketPositionType; symbol: string }[] = [];
+
+		for (const position of positions) {
+			const symbol = position.symbol.trim().toUpperCase();
+			if (!symbol) continue;
+
+			const key = quoteKey(position.type, symbol);
+			if (seen.has(key)) continue;
+
+			seen.add(key);
+			assets.push({ type: position.type, symbol });
+		}
+
+		return assets;
+	}, [positions]);
 
 	const priceQueries = useQueries({
-		queries: uniqueSymbols.map((symbol) => ({
-			queryKey: ["stock", symbol] as const,
-			queryFn: () => fetchStockPrice(symbol),
-			enabled: hydrated && uniqueSymbols.length > 0,
+		queries: uniqueAssets.map((asset) => ({
+			queryKey: [asset.type, asset.symbol] as const,
+			queryFn: () =>
+				asset.type === "crypto"
+					? fetchCryptoQuote(asset.symbol)
+					: fetchStockPrice(asset.symbol),
+			enabled: hydrated && uniqueAssets.length > 0,
 		})),
 	});
 
-	const priceBySymbol = useMemo(() => {
+	const priceByKey = useMemo(() => {
 		const map = new Map<
 			string,
 			{
@@ -143,9 +160,9 @@ export function BasketPage() {
 			}
 		>();
 
-		uniqueSymbols.forEach((symbol, index) => {
+		uniqueAssets.forEach((asset, index) => {
 			const query = priceQueries[index];
-			map.set(symbol, {
+			map.set(quoteKey(asset.type, asset.symbol), {
 				price: query?.data?.price ?? null,
 				changePercent: query?.data?.changePercent ?? null,
 				isPending: query?.isPending ?? false,
@@ -154,12 +171,14 @@ export function BasketPage() {
 		});
 
 		return map;
-	}, [priceQueries, uniqueSymbols]);
+	}, [priceQueries, uniqueAssets]);
 
 	const positionValues = useMemo(() => {
 		return positions
 			.map((position) => {
-				const quote = priceBySymbol.get(position.symbol.toUpperCase());
+				const quote = priceByKey.get(
+					quoteKey(position.type, position.symbol),
+				);
 				const price = quote?.price ?? null;
 				const changePercent = quote?.changePercent ?? null;
 				const value =
@@ -183,7 +202,7 @@ export function BasketPage() {
 				if (b.value == null) return -1;
 				return b.value - a.value;
 			});
-	}, [positions, priceBySymbol]);
+	}, [positions, priceByKey]);
 
 	const total = useMemo(() => {
 		let sum = 0;
@@ -202,6 +221,7 @@ export function BasketPage() {
 	const isAnyPending = positionValues.some((row) => row.isPending);
 
 	function openAddDialog() {
+		setTypeInput("stock");
 		setSymbolInput("");
 		setAmountInput("");
 		setFormError(null);
@@ -209,6 +229,7 @@ export function BasketPage() {
 	}
 
 	function openEditDialog(position: BasketPosition) {
+		setTypeInput(position.type);
 		setSymbolInput(position.symbol);
 		setAmountInput(String(position.amount));
 		setFormError(null);
@@ -225,7 +246,11 @@ export function BasketPage() {
 		const amount = Number(amountInput);
 
 		if (!symbol) {
-			setFormError("Enter a stock symbol.");
+			setFormError(
+				typeInput === "crypto"
+					? "Enter a crypto symbol."
+					: "Enter a stock symbol.",
+			);
 			return;
 		}
 
@@ -238,7 +263,7 @@ export function BasketPage() {
 			persist(
 				positions.map((position) =>
 					position.id === dialog.position.id
-						? { ...position, symbol, amount }
+						? { ...position, type: typeInput, symbol, amount }
 						: position,
 				),
 			);
@@ -247,6 +272,7 @@ export function BasketPage() {
 				...positions,
 				{
 					id: createPositionId(),
+					type: typeInput,
 					symbol,
 					amount,
 				},
@@ -311,7 +337,7 @@ export function BasketPage() {
 				) : positions.length === 0 ? (
 					<div className="rounded-xl border border-dashed border-black/10 px-4 py-12 text-center dark:border-white/10">
 						<p className="text-sm text-muted-foreground">
-							No positions yet. Add a stock to get started.
+							No positions yet. Add a stock or crypto to get started.
 						</p>
 						<Button className="mt-4" size="sm" onClick={openAddDialog}>
 							<PlusIcon data-icon="inline-start" />
@@ -324,7 +350,7 @@ export function BasketPage() {
 							<div className="min-w-0 flex-1">Symbol</div>
 							<div className="w-16 shrink-0 text-right sm:w-20">Change</div>
 							<div className="w-20 shrink-0 text-right sm:w-24">Price</div>
-							<div className="w-20 shrink-0 text-right sm:w-24">Shares</div>
+							<div className="w-20 shrink-0 text-right sm:w-24">Amount</div>
 							<div className="w-24 shrink-0 text-right sm:w-28">Value</div>
 						</div>
 
@@ -381,7 +407,7 @@ export function BasketPage() {
 
 									<div className="w-20 shrink-0 text-right tabular-nums sm:w-24">
 										{position.amount.toLocaleString("en-US", {
-											maximumFractionDigits: 6,
+											maximumFractionDigits: 8,
 										})}
 									</div>
 
@@ -432,8 +458,8 @@ export function BasketPage() {
 						</DialogTitle>
 						<DialogDescription>
 							{isEditing
-								? "Update the symbol or amount for this holding."
-								: "Add a stock symbol and how many shares you hold."}
+								? "Update this holding’s type, symbol, or amount."
+								: "Add a stock or crypto and how much you hold."}
 						</DialogDescription>
 					</DialogHeader>
 
@@ -445,6 +471,29 @@ export function BasketPage() {
 					>
 						<FieldGroup className="gap-4 py-2">
 							<Field>
+								<FieldLabel>Type</FieldLabel>
+								<ToggleGroup
+									value={[typeInput]}
+									onValueChange={(values) => {
+										const next = values[0];
+										if (next === "stock" || next === "crypto") {
+											setTypeInput(next);
+											setFormError(null);
+										}
+									}}
+									variant="outline"
+									spacing={0}
+									className="w-full"
+								>
+									<ToggleGroupItem value="stock" className="flex-1">
+										Stock
+									</ToggleGroupItem>
+									<ToggleGroupItem value="crypto" className="flex-1">
+										Crypto
+									</ToggleGroupItem>
+								</ToggleGroup>
+							</Field>
+							<Field>
 								<FieldLabel htmlFor="basket-symbol">Symbol</FieldLabel>
 								<Input
 									id="basket-symbol"
@@ -453,7 +502,7 @@ export function BasketPage() {
 										setSymbolInput(event.target.value.toUpperCase());
 										setFormError(null);
 									}}
-									placeholder="AAPL"
+									placeholder={typeInput === "crypto" ? "BTC" : "AAPL"}
 									autoComplete="off"
 									autoCapitalize="characters"
 									spellCheck={false}
@@ -472,7 +521,7 @@ export function BasketPage() {
 										setAmountInput(event.target.value);
 										setFormError(null);
 									}}
-									placeholder="10"
+									placeholder={typeInput === "crypto" ? "0.5" : "10"}
 								/>
 							</Field>
 							{formError ? (
