@@ -125,7 +125,7 @@ export function BasketPositionList({
 								className="border-t border-black/10 py-5 last:pb-0 dark:border-white/10"
 							>
 								<div className="mb-2 flex items-baseline gap-4 px-1 pb-1">
-									<h2 className="min-w-0 flex-1 text-2xl font-semibold tracking-tight">
+									<h2 className="min-w-0 flex-1 text-xl font-semibold tracking-tight">
 										{group.account.name}
 									</h2>
 									<div

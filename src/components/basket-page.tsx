@@ -61,7 +61,7 @@ export function BasketPage() {
 		<div className="min-h-screen bg-background text-foreground">
 			<main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
 				<div
-					className={`flex items-center justify-between gap-4 px-1 ${hydrated && positions.length > 0 ? "mb-0" : "mb-8"}`}
+					className={`flex items-start justify-between gap-4 px-1 ${hydrated && positions.length > 0 ? "mb-0" : "mb-8"}`}
 				>
 					<h1 className="text-xl font-semibold tracking-tight">
 						<ShoppingBasketIcon className="size-8" aria-label="Basket" />
@@ -110,54 +110,79 @@ export function BasketPage() {
 					</div>
 				</div>
 
-				{hydrated && positions.length > 0 ? (
-					<div className="mt-6 mb-10 flex items-center justify-center gap-2 px-1">
-						<ToggleGroup
-							value={[listView]}
-							onValueChange={(values) => {
-								const next = values[0];
-								if (next === "accounts" || next === "combined") {
-									setListView(next);
-								}
-							}}
-							variant="outline"
-							size="sm"
-							spacing={0}
-							aria-label="Account view"
-						>
-							<ToggleGroupItem value="accounts">
-								Accounts
-							</ToggleGroupItem>
-							<ToggleGroupItem value="combined">
-								Combined
-							</ToggleGroupItem>
-						</ToggleGroup>
-						<ToggleGroup
-							value={[mobileColumnView]}
-							onValueChange={(values) => {
-								const next = values[0];
-								if (next === "value" || next === "change") {
-									setMobileColumnView(next);
-								}
-							}}
-							variant="outline"
-							size="sm"
-							spacing={0}
-							className="md:hidden"
-							aria-label="Column view"
-						>
-							<ToggleGroupItem value="value" aria-label="Amount and value">
-								$
-							</ToggleGroupItem>
-							<ToggleGroupItem
-								value="change"
-								aria-label="Price, change, and gain"
-							>
-								+/-
-							</ToggleGroupItem>
-						</ToggleGroup>
+				<div className="mt-6 mb-10 flex items-center justify-between gap-2 px-1">
+					<div className="flex items-center gap-2">
+						{hydrated && positions.length > 0 ? (
+							<>
+								<ToggleGroup
+									value={[listView]}
+									onValueChange={(values) => {
+										const next = values[0];
+										if (next === "accounts" || next === "combined") {
+											setListView(next);
+										}
+									}}
+									variant="outline"
+									size="sm"
+									spacing={0}
+									aria-label="Account view"
+								>
+									<ToggleGroupItem value="accounts">
+										Accounts
+									</ToggleGroupItem>
+									<ToggleGroupItem value="combined">
+										Combined
+									</ToggleGroupItem>
+								</ToggleGroup>
+								<ToggleGroup
+									value={[mobileColumnView]}
+									onValueChange={(values) => {
+										const next = values[0];
+										if (next === "value" || next === "change") {
+											setMobileColumnView(next);
+										}
+									}}
+									variant="outline"
+									size="sm"
+									spacing={0}
+									className="md:hidden"
+									aria-label="Column view"
+								>
+									<ToggleGroupItem
+										value="value"
+										aria-label="Amount and value"
+									>
+										$
+									</ToggleGroupItem>
+									<ToggleGroupItem
+										value="change"
+										aria-label="Price, change, and gain"
+									>
+										+/-
+									</ToggleGroupItem>
+								</ToggleGroup>
+							</>
+						) : null}
 					</div>
-				) : null}
+					<div className="flex items-center justify-end gap-2">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => setPositionDialog({ open: true, mode: "add" })}
+						>
+							<PlusIcon data-icon="inline-start" />
+							Add
+						</Button>
+						<Button
+							variant="outline"
+							size="icon-sm"
+							onClick={() => setSettingsOpen(true)}
+							aria-label="Portfolio settings"
+						>
+							<SettingsIcon />
+						</Button>
+					</div>
+				</div>
 
 				{!hydrated ? (
 					<BasketPositionListSkeleton />
@@ -183,38 +208,17 @@ export function BasketPage() {
 					/>
 				)}
 
-				<div className="mt-10 flex items-center justify-between gap-4">
-					<div className="flex items-center gap-2">
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => setPositionDialog({ open: true, mode: "add" })}
-						>
-							<PlusIcon data-icon="inline-start" />
-							Add
-						</Button>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => setSettingsOpen(true)}
-							aria-label="Portfolio settings"
-						>
-							<SettingsIcon data-icon="inline-start" />
-							Settings
-						</Button>
-					</div>
-					{updatedAt != null ? (
-						<p className="text-xs text-muted-foreground">
-							Positions updated{" "}
-							{new Date(updatedAt).toLocaleString("en-US", {
-								month: "short",
-								day: "numeric",
-								hour: "numeric",
-								minute: "2-digit",
-							})}
-						</p>
-					) : null}
-				</div>
+				{updatedAt != null ? (
+					<p className="mt-10 text-center text-xs text-muted-foreground">
+						Positions updated{" "}
+						{new Date(updatedAt).toLocaleString("en-US", {
+							month: "short",
+							day: "numeric",
+							hour: "numeric",
+							minute: "2-digit",
+						})}
+					</p>
+				) : null}
 			</main>
 
 			<BasketPositionDialog
