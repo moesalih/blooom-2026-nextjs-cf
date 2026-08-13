@@ -4,7 +4,9 @@ import type { BasketPosition } from "@/lib/basket-storage";
 import type { AccountGroup, PositionRow } from "@/lib/basket-valuations";
 import {
 	changeColorClass,
+	formatPortfolioPercent,
 	formatPortfolioValue,
+	portfolioShare,
 } from "@/lib/basket-format";
 import {
 	formatChangePercent,
@@ -12,18 +14,20 @@ import {
 } from "@/components/price-list";
 import { cn } from "@/lib/utils";
 
-export type BasketMobileColumnView = "value" | "change";
+export type BasketMobileColumnView = "value" | "change" | "percent";
 export type BasketListView = "accounts" | "combined";
 
 type ColumnVisibility = {
 	hideUnlessValue?: string;
 	hideUnlessChange?: string;
+	hideUnlessPercent?: string;
 };
 
 type BasketPositionListProps = {
 	accountGroups: AccountGroup[];
 	combinedRows: PositionRow[];
 	listView: BasketListView;
+	portfolioTotal: number | null;
 	displayRate: number | null;
 	currencySymbol: string;
 	isDisplayRatePending: boolean;
@@ -36,6 +40,7 @@ export function BasketPositionList({
 	accountGroups,
 	combinedRows,
 	listView,
+	portfolioTotal,
 	displayRate,
 	currencySymbol,
 	isDisplayRatePending,
@@ -47,7 +52,13 @@ export function BasketPositionList({
 		mobileColumnView !== "value" ? "max-md:hidden" : undefined;
 	const hideUnlessChange =
 		mobileColumnView !== "change" ? "max-md:hidden" : undefined;
-	const columns: ColumnVisibility = { hideUnlessValue, hideUnlessChange };
+	const hideUnlessPercent =
+		mobileColumnView !== "percent" ? "max-md:hidden" : undefined;
+	const columns: ColumnVisibility = {
+		hideUnlessValue,
+		hideUnlessChange,
+		hideUnlessPercent,
+	};
 
 	return (
 		<div>
@@ -87,6 +98,14 @@ export function BasketPositionList({
 				</div>
 				<div
 					className={cn(
+						"w-28 shrink-0 text-right whitespace-nowrap",
+						hideUnlessPercent,
+					)}
+				>
+					% of portfolio
+				</div>
+				<div
+					className={cn(
 						"w-36 shrink-0 text-right sm:w-44",
 						hideUnlessValue,
 					)}
@@ -102,6 +121,7 @@ export function BasketPositionList({
 							<PositionRowView
 								key={row.position.id}
 								row={row}
+								portfolioTotal={portfolioTotal}
 								displayRate={displayRate}
 								currencySymbol={currencySymbol}
 								isDisplayRatePending={isDisplayRatePending}
@@ -170,6 +190,23 @@ export function BasketPositionList({
 									</div>
 									<div
 										className={cn(
+											"w-28 shrink-0 text-right text-lg font-semibold tabular-nums",
+											isAccountQuotePending || isAccountError
+												? "text-muted-foreground"
+												: undefined,
+											hideUnlessPercent,
+										)}
+									>
+										{isAccountQuotePending ? (
+											<span className="inline-block h-5 w-14 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+										) : (
+											formatPortfolioPercent(
+												portfolioShare(group.total, portfolioTotal),
+											)
+										)}
+									</div>
+									<div
+										className={cn(
 											"w-36 shrink-0 text-right text-2xl font-semibold tabular-nums sm:w-44",
 											isAccountValuePending || isFxError
 												? "text-muted-foreground"
@@ -193,6 +230,7 @@ export function BasketPositionList({
 									<PositionRowView
 										key={row.position.id}
 										row={row}
+										portfolioTotal={portfolioTotal}
 										displayRate={displayRate}
 										currencySymbol={currencySymbol}
 										isDisplayRatePending={isDisplayRatePending}
@@ -212,6 +250,7 @@ export function BasketPositionList({
 
 function PositionRowView({
 	row,
+	portfolioTotal,
 	displayRate,
 	currencySymbol,
 	isDisplayRatePending,
@@ -220,6 +259,7 @@ function PositionRowView({
 	onEditPosition,
 }: {
 	row: PositionRow;
+	portfolioTotal: number | null;
 	displayRate: number | null;
 	currencySymbol: string;
 	isDisplayRatePending: boolean;
@@ -236,7 +276,7 @@ function PositionRowView({
 		isPending,
 		isError,
 	} = row;
-	const { hideUnlessValue, hideUnlessChange } = columns;
+	const { hideUnlessValue, hideUnlessChange, hideUnlessPercent } = columns;
 	const interactive = onEditPosition != null;
 	const cells = (
 		<>
@@ -308,6 +348,22 @@ function PositionRowView({
 
 			<div
 				className={cn(
+					"w-28 shrink-0 text-right tabular-nums",
+					isPending || isError
+						? "text-muted-foreground"
+						: undefined,
+					hideUnlessPercent,
+				)}
+			>
+				{isPending ? (
+					<span className="inline-block h-4 w-12 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+				) : (
+					formatPortfolioPercent(portfolioShare(value, portfolioTotal))
+				)}
+			</div>
+
+			<div
+				className={cn(
 					"w-36 shrink-0 text-right tabular-nums sm:w-44",
 					isPending || isError || isFxError || isDisplayRatePending
 						? "text-muted-foreground"
@@ -354,6 +410,7 @@ export function BasketPositionListSkeleton() {
 					<span className="inline-block h-4 w-14 shrink-0 animate-pulse rounded bg-black/10 dark:bg-white/10 sm:w-20" />
 					<span className="inline-block h-4 w-12 shrink-0 animate-pulse rounded bg-black/10 dark:bg-white/10 sm:w-16" />
 					<span className="inline-block h-4 w-14 shrink-0 animate-pulse rounded bg-black/10 dark:bg-white/10 sm:w-20" />
+					<span className="inline-block h-4 w-12 shrink-0 animate-pulse rounded bg-black/10 dark:bg-white/10 sm:w-16" />
 					<span className="inline-block h-4 w-16 shrink-0 animate-pulse rounded bg-black/10 dark:bg-white/10 sm:w-20" />
 				</div>
 			))}

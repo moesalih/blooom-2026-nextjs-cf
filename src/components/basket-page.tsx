@@ -59,7 +59,7 @@ export function BasketPage() {
 
 	return (
 		<div className="min-h-screen bg-background text-foreground">
-			<main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
+			<main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
 				<div
 					className={`flex items-start justify-between gap-4 px-1 ${hydrated && positions.length > 0 ? "mb-0" : "mb-8"}`}
 				>
@@ -138,7 +138,11 @@ export function BasketPage() {
 									value={[mobileColumnView]}
 									onValueChange={(values) => {
 										const next = values[0];
-										if (next === "value" || next === "change") {
+										if (
+											next === "value" ||
+											next === "change" ||
+											next === "percent"
+										) {
 											setMobileColumnView(next);
 										}
 									}}
@@ -159,6 +163,12 @@ export function BasketPage() {
 										aria-label="Price, change, and gain"
 									>
 										+/-
+									</ToggleGroupItem>
+									<ToggleGroupItem
+										value="percent"
+										aria-label="Percent of portfolio"
+									>
+										%
 									</ToggleGroupItem>
 								</ToggleGroup>
 							</>
@@ -197,6 +207,7 @@ export function BasketPage() {
 						accountGroups={accountGroups}
 						combinedRows={combinedRows}
 						listView={listView}
+						portfolioTotal={total}
 						displayRate={displayRate}
 						currencySymbol={currencySymbol}
 						isDisplayRatePending={isDisplayRatePending}
@@ -252,14 +263,14 @@ export function BasketPage() {
 				onDelete={
 					positionDialog.open && positionDialog.mode === "edit"
 						? () => {
-								persist(
-									accounts,
-									positions.filter(
-										(item) => item.id !== positionDialog.position.id,
-									),
-								);
-								setPositionDialog({ open: false });
-							}
+							persist(
+								accounts,
+								positions.filter(
+									(item) => item.id !== positionDialog.position.id,
+								),
+							);
+							setPositionDialog({ open: false });
+						}
 						: undefined
 				}
 			/>

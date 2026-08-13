@@ -18,6 +18,27 @@ export function sortByNumericDesc(a: number | null, b: number | null) {
 	return b - a;
 }
 
+/** Share of the portfolio as a percentage, or null when it cannot be computed. */
+export function portfolioShare(
+	part: number | null,
+	total: number | null,
+): number | null {
+	if (part == null || total == null || total === 0) {
+		return null;
+	}
+	if (!Number.isFinite(part) || !Number.isFinite(total)) {
+		return null;
+	}
+	return (part / total) * 100;
+}
+
+export function formatPortfolioPercent(value: number | null): string {
+	if (value == null || Number.isNaN(value) || !Number.isFinite(value)) {
+		return "—";
+	}
+	return `${value.toFixed(1)}%`;
+}
+
 /** Convert a USD value into portfolio currency for display. */
 export function formatPortfolioValue(
 	usdValue: number | null,
