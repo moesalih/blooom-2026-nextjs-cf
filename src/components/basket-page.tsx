@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon, SettingsIcon, ShoppingBasketIcon } from "lucide-react";
+import Link from "next/link";
+import { NewspaperIcon, PlusIcon, SettingsIcon, ShoppingBasketIcon } from "lucide-react";
 
 import { BasketPositionDialog } from "@/components/basket/position-dialog";
 import {
@@ -230,6 +231,16 @@ export function BasketPage() {
 						})}
 					</p>
 				) : null}
+
+				<p className={`text-center ${updatedAt != null ? "mt-6" : "mt-10"}`}>
+					<Link
+						href="/"
+						className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+					>
+						<NewspaperIcon className="size-3.5" />
+						News
+					</Link>
+				</p>
 			</main>
 
 			<BasketPositionDialog
