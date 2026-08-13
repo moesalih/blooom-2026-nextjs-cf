@@ -7,6 +7,7 @@ import { BasketPositionDialog } from "@/components/basket/position-dialog";
 import {
 	BasketPositionList,
 	BasketPositionListSkeleton,
+	type BasketListView,
 	type BasketMobileColumnView,
 } from "@/components/basket/position-list";
 import { BasketSettingsDialog } from "@/components/basket/settings-dialog";
@@ -36,6 +37,7 @@ export function BasketPage() {
 		isDisplayRatePending,
 		isFxError,
 		accountGroups,
+		combinedRows,
 		total,
 		totalChangeValue,
 		totalChangePercent,
@@ -51,6 +53,7 @@ export function BasketPage() {
 		open: false,
 	});
 	const [settingsOpen, setSettingsOpen] = useState(false);
+	const [listView, setListView] = useState<BasketListView>("accounts");
 	const [mobileColumnView, setMobileColumnView] =
 		useState<BasketMobileColumnView>("value");
 
@@ -58,7 +61,7 @@ export function BasketPage() {
 		<div className="min-h-screen bg-background text-foreground">
 			<main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
 				<div
-					className={`flex items-center justify-between gap-4 px-1 ${hydrated && positions.length > 0 ? "mb-0 md:mb-8" : "mb-8"}`}
+					className={`flex items-center justify-between gap-4 px-1 ${hydrated && positions.length > 0 ? "mb-0" : "mb-8"}`}
 				>
 					<h1 className="text-xl font-semibold tracking-tight">
 						<ShoppingBasketIcon className="size-8" aria-label="Basket" />
@@ -108,30 +111,52 @@ export function BasketPage() {
 				</div>
 
 				{hydrated && positions.length > 0 ? (
-					<ToggleGroup
-						value={[mobileColumnView]}
-						onValueChange={(values) => {
-							const next = values[0];
-							if (next === "value" || next === "change") {
-								setMobileColumnView(next);
-							}
-						}}
-						variant="outline"
-						size="sm"
-						spacing={0}
-						className="my-6 ml-auto px-1 md:hidden"
-						aria-label="Column view"
-					>
-						<ToggleGroupItem value="value" aria-label="Amount and value">
-							$
-						</ToggleGroupItem>
-						<ToggleGroupItem
-							value="change"
-							aria-label="Price, change, and gain"
+					<div className="mt-6 mb-10 flex items-center justify-center gap-2 px-1">
+						<ToggleGroup
+							value={[listView]}
+							onValueChange={(values) => {
+								const next = values[0];
+								if (next === "accounts" || next === "combined") {
+									setListView(next);
+								}
+							}}
+							variant="outline"
+							size="sm"
+							spacing={0}
+							aria-label="Account view"
 						>
-							+/-
-						</ToggleGroupItem>
-					</ToggleGroup>
+							<ToggleGroupItem value="accounts">
+								Accounts
+							</ToggleGroupItem>
+							<ToggleGroupItem value="combined">
+								Combined
+							</ToggleGroupItem>
+						</ToggleGroup>
+						<ToggleGroup
+							value={[mobileColumnView]}
+							onValueChange={(values) => {
+								const next = values[0];
+								if (next === "value" || next === "change") {
+									setMobileColumnView(next);
+								}
+							}}
+							variant="outline"
+							size="sm"
+							spacing={0}
+							className="md:hidden"
+							aria-label="Column view"
+						>
+							<ToggleGroupItem value="value" aria-label="Amount and value">
+								$
+							</ToggleGroupItem>
+							<ToggleGroupItem
+								value="change"
+								aria-label="Price, change, and gain"
+							>
+								+/-
+							</ToggleGroupItem>
+						</ToggleGroup>
+					</div>
 				) : null}
 
 				{!hydrated ? (
@@ -145,6 +170,8 @@ export function BasketPage() {
 				) : (
 					<BasketPositionList
 						accountGroups={accountGroups}
+						combinedRows={combinedRows}
+						listView={listView}
 						displayRate={displayRate}
 						currencySymbol={currencySymbol}
 						isDisplayRatePending={isDisplayRatePending}

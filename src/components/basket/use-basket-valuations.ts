@@ -12,6 +12,7 @@ import {
 import {
 	aggregateChange,
 	buildAccountGroups,
+	buildCombinedRows,
 	buildPositionRows,
 	sumPortfolioTotal,
 	type QuoteLookup,
@@ -102,6 +103,11 @@ export function useBasketValuations({
 		[accounts, positionRows],
 	);
 
+	const combinedRows = useMemo(
+		() => buildCombinedRows(positionRows),
+		[positionRows],
+	);
+
 	const total = useMemo(
 		() => sumPortfolioTotal(positionRows),
 		[positionRows],
@@ -119,6 +125,7 @@ export function useBasketValuations({
 		isDisplayRatePending,
 		isFxError,
 		accountGroups,
+		combinedRows,
 		total,
 		totalChangeValue,
 		totalChangePercent,

@@ -193,3 +193,46 @@ export function buildAccountGroups(
 export function sumPortfolioTotal(positionRows: PositionRow[]): number | null {
 	return sumValues(positionRows);
 }
+
+/** Merge positions that share type + symbol, summing amounts and values. */
+export function buildCombinedRows(positionRows: PositionRow[]): PositionRow[] {
+	const grouped = new Map<string, PositionRow[]>();
+
+	for (const row of positionRows) {
+		const key = quoteKey(row.position.type, row.position.symbol);
+		const existing = grouped.get(key);
+		if (existing) {
+			existing.push(row);
+		} else {
+			grouped.set(key, [row]);
+		}
+	}
+
+	const combined: PositionRow[] = [];
+
+	for (const [key, rows] of grouped) {
+		const first = rows[0];
+		const amount = rows.reduce((sum, row) => sum + row.position.amount, 0);
+		const price = first.price;
+		const value =
+			price != null && Number.isFinite(amount) ? price * amount : sumValues(rows);
+
+		combined.push({
+			position: {
+				id: `combined:${key}`,
+				accountId: first.position.accountId,
+				type: first.position.type,
+				symbol: first.position.symbol,
+				amount,
+			},
+			price,
+			changePercent: first.changePercent,
+			value,
+			changeValue: changeValueFromPercent(value, first.changePercent),
+			isPending: rows.some((row) => row.isPending),
+			isError: rows.every((row) => row.isError),
+		});
+	}
+
+	return combined.sort((a, b) => sortByNumericDesc(a.value, b.value));
+}
