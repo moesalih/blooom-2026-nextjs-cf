@@ -289,10 +289,14 @@ export function BasketPage() {
 			<BasketSettingsDialog
 				open={settingsOpen}
 				currency={currencySymbol}
+				data={{ accounts, positions, currency, updatedAt }}
 				onClose={() => setSettingsOpen(false)}
 				onSave={(nextCurrency) => {
 					persist(accounts, positions, nextCurrency);
 					setSettingsOpen(false);
+				}}
+				onImport={(next) => {
+					persist(next.accounts, next.positions, next.currency);
 				}}
 			/>
 		</div>

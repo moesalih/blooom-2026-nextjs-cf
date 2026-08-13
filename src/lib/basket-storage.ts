@@ -199,26 +199,99 @@ export function loadBasket(): BasketData {
 	}
 }
 
-export function saveBasket(data: BasketData): void {
-	if (typeof window === "undefined") {
-		return;
-	}
-
-	const accounts = pruneAccounts(data.accounts, data.positions);
+export function serializeBasket(data: BasketData): BasketData {
 	const currency =
 		typeof data.currency === "string"
 			? data.currency.trim().toUpperCase() || DEFAULT_CURRENCY
 			: DEFAULT_CURRENCY;
 
-	window.localStorage.setItem(
-		STORAGE_KEY,
-		JSON.stringify({
-			accounts,
-			positions: data.positions,
-			currency,
-			updatedAt: data.updatedAt,
-		} satisfies BasketData),
-	);
+	return {
+		accounts: pruneAccounts(data.accounts, data.positions),
+		positions: data.positions,
+		currency,
+		updatedAt: data.updatedAt,
+	};
+}
+
+export function serializeBasketJson(data: BasketData): string {
+	return JSON.stringify(serializeBasket(data), null, 2);
+}
+
+export type ParseBasketResult =
+	| { ok: true; data: BasketData }
+	| { ok: false; error: string };
+
+export function parseBasketJson(raw: string): ParseBasketResult {
+	const trimmed = raw.trim();
+	if (!trimmed) {
+		return { ok: false, error: "Clipboard is empty." };
+	}
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(trimmed);
+	} catch {
+		return { ok: false, error: "Clipboard does not contain valid JSON." };
+	}
+
+	if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
+		return { ok: false, error: "Clipboard JSON is not a portfolio object." };
+	}
+
+	const candidate = parsed as Partial<BasketData>;
+	const hasKnownShape =
+		"positions" in candidate ||
+		"accounts" in candidate ||
+		"currency" in candidate;
+
+	if (!hasKnownShape) {
+		return { ok: false, error: "Clipboard JSON is not basket data." };
+	}
+
+	if ("positions" in candidate && !Array.isArray(candidate.positions)) {
+		return { ok: false, error: "positions must be an array." };
+	}
+
+	if ("accounts" in candidate && !Array.isArray(candidate.accounts)) {
+		return { ok: false, error: "accounts must be an array." };
+	}
+
+	if (Array.isArray(candidate.positions) && candidate.positions.length > 0) {
+		const invalidCount = candidate.positions.filter(
+			(position) => !isValidPosition(position),
+		).length;
+		if (invalidCount === candidate.positions.length) {
+			return { ok: false, error: "No valid positions found in clipboard data." };
+		}
+		if (invalidCount > 0) {
+			return {
+				ok: false,
+				error: `${invalidCount} position(s) in clipboard data are invalid.`,
+			};
+		}
+	}
+
+	if (Array.isArray(candidate.accounts) && candidate.accounts.length > 0) {
+		const invalidCount = candidate.accounts.filter(
+			(account) => !isValidAccount(account),
+		).length;
+		if (invalidCount > 0) {
+			return {
+				ok: false,
+				error: `${invalidCount} account(s) in clipboard data are invalid.`,
+			};
+		}
+	}
+
+	return { ok: true, data: normalizeBasket(candidate) };
+}
+
+export function saveBasket(data: BasketData): void {
+	if (typeof window === "undefined") {
+		return;
+	}
+
+	window.localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeBasket(data)));
 }
 
 export function findAccountByName(
