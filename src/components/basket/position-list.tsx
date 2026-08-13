@@ -76,7 +76,7 @@ export function BasketPositionList({
 				</div>
 				<div
 					className={cn(
-						"w-28 shrink-0 text-right sm:w-36",
+						"w-36 shrink-0 text-right sm:w-44",
 						hideUnlessValue,
 					)}
 				>
@@ -85,19 +85,72 @@ export function BasketPositionList({
 			</div>
 
 			<div>
-				{accountGroups.map((group) => (
+				{accountGroups.map((group) => {
+					const isAccountQuotePending = group.rows.some(
+						(row) => row.isPending,
+					);
+					const isAccountValuePending =
+						isAccountQuotePending || isDisplayRatePending;
+					const isAccountError = group.rows.every((row) => row.isError);
+
+					return (
 					<section
 						key={group.account.id}
 						className="border-t border-black/10 py-5 last:pb-0 dark:border-white/10"
 					>
-						<div className="mb-2 flex items-baseline justify-between gap-4 px-1 pb-1">
-							<h2 className="text-2xl font-semibold tracking-tight">
+						<div className="mb-2 flex items-baseline gap-4 px-1 pb-1">
+							<h2 className="min-w-0 flex-1 text-2xl font-semibold tracking-tight">
 								{group.account.name}
 							</h2>
-							<p className="text-2xl font-semibold tabular-nums">
-								{group.rows.some((row) => row.isPending) ||
-									isDisplayRatePending ? (
-									<span className="inline-block h-7 w-32 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+							<div
+								className={cn(
+									"w-16 shrink-0 text-right text-lg font-semibold tabular-nums sm:w-20",
+									isAccountQuotePending || isAccountError
+										? "text-muted-foreground"
+										: changeColorClass(group.changePercent),
+									hideUnlessChange,
+								)}
+							>
+								{isAccountQuotePending ? (
+									<span className="inline-block h-5 w-14 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+								) : isAccountError ? (
+									"—"
+								) : (
+									formatChangePercent(group.changePercent)
+								)}
+							</div>
+							<div
+								className={cn(
+									"w-20 shrink-0 text-right text-lg font-semibold tabular-nums sm:w-28",
+									isAccountValuePending || isAccountError || isFxError
+										? "text-muted-foreground"
+										: changeColorClass(group.changeValue),
+									hideUnlessChange,
+								)}
+							>
+								{isAccountValuePending ? (
+									<span className="inline-block h-5 w-16 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+								) : isAccountError ? (
+									"—"
+								) : (
+									formatPortfolioValue(
+										group.changeValue,
+										displayRate,
+										currencySymbol,
+									)
+								)}
+							</div>
+							<div
+								className={cn(
+									"w-36 shrink-0 text-right text-2xl font-semibold tabular-nums sm:w-44",
+									isAccountValuePending || isFxError
+										? "text-muted-foreground"
+										: undefined,
+									hideUnlessValue,
+								)}
+							>
+								{isAccountValuePending ? (
+									<span className="inline-block h-7 w-24 animate-pulse rounded bg-black/10 dark:bg-white/10" />
 								) : (
 									formatPortfolioValue(
 										group.total,
@@ -105,7 +158,7 @@ export function BasketPositionList({
 										currencySymbol,
 									)
 								)}
-							</p>
+							</div>
 						</div>
 
 						{group.rows.map(
@@ -199,7 +252,7 @@ export function BasketPositionList({
 
 									<div
 										className={cn(
-											"w-28 shrink-0 text-right tabular-nums sm:w-36",
+											"w-36 shrink-0 text-right tabular-nums sm:w-44",
 											isPending ||
 												isError ||
 												isFxError ||
@@ -223,7 +276,8 @@ export function BasketPositionList({
 							),
 						)}
 					</section>
-				))}
+					);
+				})}
 			</div>
 		</div>
 	);

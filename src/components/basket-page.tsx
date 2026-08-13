@@ -12,13 +12,14 @@ import {
 import { BasketSettingsDialog } from "@/components/basket/settings-dialog";
 import { useBasketState } from "@/components/basket/use-basket-state";
 import { useBasketValuations } from "@/components/basket/use-basket-valuations";
+import { formatChangePercent } from "@/components/price-list";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { changeColorClass, formatPortfolioValue } from "@/lib/basket-format";
 import {
 	type BasketPosition,
 	createId,
 } from "@/lib/basket-storage";
-import { formatPortfolioValue } from "@/lib/basket-format";
 
 type PositionDialogState =
 	| { open: false }
@@ -36,6 +37,8 @@ export function BasketPage() {
 		isFxError,
 		accountGroups,
 		total,
+		totalChangeValue,
+		totalChangePercent,
 		isAnyPending,
 	} = useBasketValuations({
 		accounts,
@@ -62,15 +65,44 @@ export function BasketPage() {
 					</h1>
 					<div className="text-right">
 						{!hydrated || (positions.length > 0 && isAnyPending) ? (
-							<div className="ml-auto h-10 w-40 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+							<div className="flex flex-col items-end gap-2">
+								<div className="h-10 w-40 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+								<div className="h-5 w-28 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+							</div>
 						) : positions.length === 0 ? (
 							<p className="text-4xl font-semibold tracking-tight tabular-nums text-muted-foreground">
 								—
 							</p>
 						) : (
-							<p className="text-4xl font-semibold tracking-tight tabular-nums">
-								{formatPortfolioValue(total, displayRate, currencySymbol)}
-							</p>
+							<>
+								<p className="text-4xl font-semibold tracking-tight tabular-nums">
+									{formatPortfolioValue(
+										total,
+										displayRate,
+										currencySymbol,
+									)}
+								</p>
+								<p className="mt-1 flex items-baseline justify-end gap-3 text-lg font-semibold tabular-nums">
+									<span
+										className={changeColorClass(totalChangePercent)}
+									>
+										{formatChangePercent(totalChangePercent)}
+									</span>
+									<span
+										className={
+											isFxError
+												? "text-muted-foreground"
+												: changeColorClass(totalChangeValue)
+										}
+									>
+										{formatPortfolioValue(
+											totalChangeValue,
+											displayRate,
+											currencySymbol,
+										)}
+									</span>
+								</p>
+							</>
 						)}
 					</div>
 				</div>

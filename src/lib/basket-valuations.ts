@@ -26,6 +26,10 @@ export type AccountGroup = {
 	rows: PositionRow[];
 	/** USD account total */
 	total: number | null;
+	/** USD day P&L for the account */
+	changeValue: number | null;
+	/** Weighted day change % for the account */
+	changePercent: number | null;
 };
 
 /** Day P&L in the same units as value, derived from change %. */
@@ -47,6 +51,53 @@ export function changeValueFromPercent(
 	}
 
 	return (value * ratio) / previousFactor;
+}
+
+/** Day change % from current value and day P&L, both in the same units. */
+export function changePercentFromValue(
+	currentValue: number | null,
+	changeValue: number | null,
+): number | null {
+	if (currentValue == null || changeValue == null) {
+		return null;
+	}
+	if (!Number.isFinite(currentValue) || !Number.isFinite(changeValue)) {
+		return null;
+	}
+
+	const previous = currentValue - changeValue;
+	if (previous === 0) {
+		return null;
+	}
+
+	return (changeValue / previous) * 100;
+}
+
+/** Weighted day P&L and % from rows that have both a value and a change. */
+export function aggregateChange(rows: PositionRow[]): {
+	changeValue: number | null;
+	changePercent: number | null;
+} {
+	let current = 0;
+	let change = 0;
+	let hasChange = false;
+
+	for (const row of rows) {
+		if (row.value != null && row.changeValue != null) {
+			current += row.value;
+			change += row.changeValue;
+			hasChange = true;
+		}
+	}
+
+	if (!hasChange) {
+		return { changeValue: null, changePercent: null };
+	}
+
+	return {
+		changeValue: change,
+		changePercent: changePercentFromValue(current, change),
+	};
 }
 
 export function buildPositionRows(
@@ -97,11 +148,14 @@ export function buildAccountGroups(
 			const rows = positionRows
 				.filter((row) => row.position.accountId === account.id)
 				.sort((a, b) => sortByNumericDesc(a.value, b.value));
+			const change = aggregateChange(rows);
 
 			return {
 				account,
 				rows,
 				total: sumValues(rows),
+				changeValue: change.changeValue,
+				changePercent: change.changePercent,
 			};
 		})
 		.filter((group) => group.rows.length > 0)
@@ -117,6 +171,7 @@ export function buildAccountGroups(
 		const sortedOrphans = orphanRows.sort((a, b) =>
 			sortByNumericDesc(a.value, b.value),
 		);
+		const change = aggregateChange(sortedOrphans);
 		groups.push({
 			account: {
 				id: sortedOrphans[0].position.accountId,
@@ -126,6 +181,8 @@ export function buildAccountGroups(
 			},
 			rows: sortedOrphans,
 			total: sumValues(sortedOrphans),
+			changeValue: change.changeValue,
+			changePercent: change.changePercent,
 		});
 		groups.sort((a, b) => sortByNumericDesc(a.total, b.total));
 	}

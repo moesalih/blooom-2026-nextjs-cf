@@ -10,6 +10,7 @@ import {
 	quoteKey,
 } from "@/lib/basket-quotes";
 import {
+	aggregateChange,
 	buildAccountGroups,
 	buildPositionRows,
 	sumPortfolioTotal,
@@ -106,6 +107,9 @@ export function useBasketValuations({
 		[positionRows],
 	);
 
+	const { changeValue: totalChangeValue, changePercent: totalChangePercent } =
+		useMemo(() => aggregateChange(positionRows), [positionRows]);
+
 	const isAnyPending =
 		positionRows.some((row) => row.isPending) || isDisplayRatePending;
 
@@ -116,6 +120,8 @@ export function useBasketValuations({
 		isFxError,
 		accountGroups,
 		total,
+		totalChangeValue,
+		totalChangePercent,
 		isAnyPending,
 	};
 }
