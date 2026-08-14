@@ -90,7 +90,7 @@ export function BasketPositionList({
 				</div>
 				<div
 					className={cn(
-						"w-20 shrink-0 text-right sm:w-28",
+						"w-24 shrink-0 text-right sm:w-28",
 						hideUnlessChange,
 					)}
 				>
@@ -167,7 +167,7 @@ export function BasketPositionList({
 									</div>
 									<div
 										className={cn(
-											"w-20 shrink-0 text-right text-lg font-semibold tabular-nums sm:w-28",
+											"w-24 shrink-0 text-right text-lg font-semibold tabular-nums sm:w-28",
 											isAccountValuePending ||
 												isAccountError ||
 												isFxError
@@ -330,7 +330,7 @@ function PositionRowView({
 
 			<div
 				className={cn(
-					"w-20 shrink-0 text-right tabular-nums sm:w-28",
+					"w-24 shrink-0 text-right tabular-nums sm:w-28",
 					isPending || isError || isFxError || isDisplayRatePending
 						? "text-muted-foreground"
 						: changeColorClass(changeValue),
