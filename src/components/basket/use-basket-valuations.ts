@@ -74,6 +74,7 @@ export function useBasketValuations({
 			queryKey: [asset.type, asset.symbol] as const,
 			queryFn: () => fetchAssetQuote(asset.type, asset.symbol),
 			enabled: hydrated && uniqueAssets.length > 0,
+			refetchInterval: 30 * 60 * 1000,
 		})),
 	});
 
