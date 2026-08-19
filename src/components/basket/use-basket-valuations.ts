@@ -120,6 +120,12 @@ export function useBasketValuations({
 	const isAnyPending =
 		positionRows.some((row) => row.isPending) || isDisplayRatePending;
 
+	const pricesUpdatedAt =
+		priceQueries.reduce(
+			(latest, query) => Math.max(latest, query.dataUpdatedAt),
+			0,
+		) || null;
+
 	return {
 		currencySymbol,
 		displayRate,
@@ -131,5 +137,6 @@ export function useBasketValuations({
 		totalChangeValue,
 		totalChangePercent,
 		isAnyPending,
+		pricesUpdatedAt,
 	};
 }

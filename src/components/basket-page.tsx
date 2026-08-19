@@ -43,6 +43,7 @@ export function BasketPage() {
 		totalChangeValue,
 		totalChangePercent,
 		isAnyPending,
+		pricesUpdatedAt,
 	} = useBasketValuations({
 		accounts,
 		positions,
@@ -220,19 +221,34 @@ export function BasketPage() {
 					/>
 				)}
 
-				{updatedAt != null ? (
-					<p className="mt-10 text-center text-xs text-muted-foreground">
-						Positions updated{" "}
-						{new Date(updatedAt).toLocaleString("en-US", {
-							month: "short",
-							day: "numeric",
-							hour: "numeric",
-							minute: "2-digit",
-						})}
-					</p>
+				{pricesUpdatedAt != null || updatedAt != null ? (
+					<div className="mt-10 space-y-1 text-center text-xs text-muted-foreground">
+						{pricesUpdatedAt != null ? (
+							<p>
+								Prices updated{" "}
+								{new Date(pricesUpdatedAt).toLocaleString("en-US", {
+									month: "short",
+									day: "numeric",
+									hour: "numeric",
+									minute: "2-digit",
+								})}
+							</p>
+						) : null}
+						{updatedAt != null ? (
+							<p>
+								Positions updated{" "}
+								{new Date(updatedAt).toLocaleString("en-US", {
+									month: "short",
+									day: "numeric",
+									hour: "numeric",
+									minute: "2-digit",
+								})}
+							</p>
+						) : null}
+					</div>
 				) : null}
 
-				<p className={`text-center ${updatedAt != null ? "mt-6" : "mt-10"}`}>
+				<p className={`text-center ${pricesUpdatedAt != null || updatedAt != null ? "mt-6" : "mt-10"}`}>
 					<Link
 						href="/"
 						className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
