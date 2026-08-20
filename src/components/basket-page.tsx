@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { NewspaperIcon, PlusIcon, SettingsIcon, ShoppingBasketIcon } from "lucide-react";
 
 import { BasketPositionDialog } from "@/components/basket/position-dialog";
@@ -29,6 +30,7 @@ type PositionDialogState =
 	| { open: true; mode: "edit"; position: BasketPosition };
 
 export function BasketPage() {
+	const queryClient = useQueryClient();
 	const { accounts, positions, currency, updatedAt, hydrated, persist } =
 		useBasketState();
 
@@ -79,7 +81,14 @@ export function BasketPage() {
 								—
 							</p>
 						) : (
-							<>
+							<div
+								role="button"
+								tabIndex={0}
+								aria-label="Refresh prices"
+								onClick={() => {
+									void queryClient.invalidateQueries();
+								}}
+							>
 								<p className="text-4xl font-semibold tracking-tight tabular-nums">
 									{formatPortfolioValue(
 										total,
@@ -107,7 +116,7 @@ export function BasketPage() {
 										)}
 									</span>
 								</p>
-							</>
+							</div>
 						)}
 					</div>
 				</div>
