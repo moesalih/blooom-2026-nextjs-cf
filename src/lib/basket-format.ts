@@ -1,3 +1,5 @@
+import type { BasketPositionType } from "@/lib/basket-storage";
+
 export function changeColorClass(changePercent: number | null): string {
 	if (changePercent == null) {
 		return "text-muted-foreground";
@@ -30,6 +32,35 @@ export function portfolioShare(
 		return null;
 	}
 	return (part / total) * 100;
+}
+
+/** Tooltip text for 52-week high (stocks) or all-time high (crypto). */
+export function formatHighPriceTooltip(
+	type: BasketPositionType,
+	highPrice: number | null,
+	currentPrice: number | null,
+): string | null {
+	if (
+		highPrice == null ||
+		currentPrice == null ||
+		!Number.isFinite(highPrice) ||
+		!Number.isFinite(currentPrice) ||
+		highPrice <= 0
+	) {
+		return null;
+	}
+
+	const label = type === "crypto" ? "ath" : "52wh";
+	const highFormatted = new Intl.NumberFormat("en-US", {
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+	}).format(highPrice);
+	const downPercent = Math.max(
+		0,
+		((highPrice - currentPrice) / highPrice) * 100,
+	);
+
+	return `${label}: ${highFormatted} (down ${downPercent.toFixed(1)}%)`;
 }
 
 export function formatPortfolioPercent(value: number | null): string {

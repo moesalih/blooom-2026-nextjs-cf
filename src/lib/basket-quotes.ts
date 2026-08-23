@@ -5,6 +5,8 @@ export type AssetQuote = {
 	symbol: string;
 	price: number | null;
 	changePercent: number | null;
+	/** 52-week high for stocks, all-time high for crypto */
+	highPrice: number | null;
 };
 
 export function quoteKey(type: BasketPositionType, symbol: string): string {
@@ -22,19 +24,14 @@ export async function fetchStockPrice(symbol: string): Promise<AssetQuote> {
 		symbol?: string;
 		price?: number | null;
 		changePercent?: number | null;
+		"52wh"?: number | null;
 	};
 
 	return {
 		symbol,
-		price:
-			typeof json.price === "number" && !Number.isNaN(json.price)
-				? json.price
-				: null,
-		changePercent:
-			typeof json.changePercent === "number" &&
-			!Number.isNaN(json.changePercent)
-				? json.changePercent
-				: null,
+		price: parseOptionalQuoteNumber(json.price),
+		changePercent: parseOptionalQuoteNumber(json.changePercent),
+		highPrice: parseOptionalQuoteNumber(json["52wh"]),
 	};
 }
 
@@ -42,9 +39,21 @@ export async function fetchAssetQuote(
 	type: BasketPositionType,
 	symbol: string,
 ): Promise<AssetQuote> {
-	return type === "crypto"
-		? fetchCryptoQuote(symbol)
-		: fetchStockPrice(symbol);
+	if (type === "crypto") {
+		const quote = await fetchCryptoQuote(symbol);
+		return {
+			symbol: quote.symbol,
+			price: quote.price,
+			changePercent: quote.changePercent,
+			highPrice: quote.ath,
+		};
+	}
+
+	return fetchStockPrice(symbol);
+}
+
+function parseOptionalQuoteNumber(value: number | null | undefined): number | null {
+	return typeof value === "number" && !Number.isNaN(value) ? value : null;
 }
 
 /** API returns units of currency per 1 USD. USD is always 1. */

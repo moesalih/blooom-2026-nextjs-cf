@@ -5,6 +5,7 @@ import { sortByNumericDesc } from "@/lib/basket-format";
 export type QuoteLookup = {
 	price: number | null;
 	changePercent: number | null;
+	highPrice: number | null;
 	isPending: boolean;
 	isError: boolean;
 };
@@ -13,6 +14,8 @@ export type PositionRow = {
 	position: BasketPosition;
 	price: number | null;
 	changePercent: number | null;
+	/** 52-week high for stocks, all-time high for crypto */
+	highPrice: number | null;
 	/** USD market value */
 	value: number | null;
 	/** USD day change (from previous close via change %) */
@@ -108,6 +111,7 @@ export function buildPositionRows(
 		const quote = priceByKey.get(quoteKey(position.type, position.symbol));
 		const price = quote?.price ?? null;
 		const changePercent = quote?.changePercent ?? null;
+		const highPrice = quote?.highPrice ?? null;
 		const value =
 			price != null && Number.isFinite(position.amount)
 				? price * position.amount
@@ -117,6 +121,7 @@ export function buildPositionRows(
 			position,
 			price,
 			changePercent,
+			highPrice,
 			value,
 			changeValue: changeValueFromPercent(value, changePercent),
 			isPending: quote?.isPending ?? false,
@@ -227,6 +232,7 @@ export function buildCombinedRows(positionRows: PositionRow[]): PositionRow[] {
 			},
 			price,
 			changePercent: first.changePercent,
+			highPrice: first.highPrice,
 			value,
 			changeValue: changeValueFromPercent(value, first.changePercent),
 			isPending: rows.some((row) => row.isPending),

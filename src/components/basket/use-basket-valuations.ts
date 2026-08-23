@@ -86,6 +86,7 @@ export function useBasketValuations({
 			map.set(quoteKey(asset.type, asset.symbol), {
 				price: query?.data?.price ?? null,
 				changePercent: query?.data?.changePercent ?? null,
+				highPrice: query?.data?.highPrice ?? null,
 				isPending: query?.isPending ?? false,
 				isError: query?.isError ?? false,
 			});

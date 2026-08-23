@@ -2,6 +2,7 @@ export type CryptoQuote = {
 	symbol: string;
 	price: number | null;
 	changePercent: number | null;
+	ath: number | null;
 };
 
 /** Common ticker → CoinGecko id map for reliable lookups without search. */
@@ -58,13 +59,12 @@ type CoinGeckoSearchResponse = {
 	coins?: CoinGeckoSearchCoin[];
 };
 
-type CoinGeckoPriceResponse = Record<
-	string,
-	{
-		usd?: number;
-		usd_24h_change?: number;
-	}
->;
+type CoinGeckoMarket = {
+	id?: string;
+	current_price?: number | null;
+	price_change_percentage_24h?: number | null;
+	ath?: number | null;
+};
 
 async function resolveCoinId(symbol: string): Promise<string | null> {
 	const upper = symbol.trim().toUpperCase();
@@ -112,8 +112,8 @@ export async function fetchCryptoQuote(symbol: string): Promise<CryptoQuote> {
 		throw new Error(`Unknown crypto symbol: ${upper}`);
 	}
 
-	const priceUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coinId)}&vs_currencies=usd&include_24hr_change=true`;
-	const response = await fetch(priceUrl, {
+	const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${encodeURIComponent(coinId)}`;
+	const response = await fetch(marketsUrl, {
 		headers: { Accept: "application/json" },
 	});
 
@@ -121,19 +121,17 @@ export async function fetchCryptoQuote(symbol: string): Promise<CryptoQuote> {
 		throw new Error("Failed to load crypto price");
 	}
 
-	const json = (await response.json()) as CoinGeckoPriceResponse;
-	const quote = json[coinId];
+	const json = (await response.json()) as CoinGeckoMarket[];
+	const quote = json.find((coin) => coin.id === coinId) ?? json[0];
 
 	return {
 		symbol: upper,
-		price:
-			typeof quote?.usd === "number" && !Number.isNaN(quote.usd)
-				? quote.usd
-				: null,
-		changePercent:
-			typeof quote?.usd_24h_change === "number" &&
-			!Number.isNaN(quote.usd_24h_change)
-				? quote.usd_24h_change
-				: null,
+		price: parseOptionalNumber(quote?.current_price),
+		changePercent: parseOptionalNumber(quote?.price_change_percentage_24h),
+		ath: parseOptionalNumber(quote?.ath),
 	};
+}
+
+function parseOptionalNumber(value: number | null | undefined): number | null {
+	return typeof value === "number" && !Number.isNaN(value) ? value : null;
 }

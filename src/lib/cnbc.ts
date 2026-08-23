@@ -12,6 +12,7 @@ export type CnbcQuote = {
 	price: number | null;
 	changePercent: number | null;
 	marketCap: number | null;
+	"52wh": number | null;
 };
 
 function parseNumber(value: string | undefined): number | null {
@@ -50,21 +51,51 @@ function parseCompactMarketCap(value: string | undefined): number | null {
 	return amount * multiplier;
 }
 
-function parseMarketCapFromHtml(html: string): number | null {
-	const visibleMarketCapPatterns = [
-		/SplitStats-name">Market Cap<\/span><span class="SplitStats-price">([^<]+)<\/span>/,
-		/Summary-label">Market Cap<\/span><span class="Summary-value">([^<]+)<\/span>/,
+function parseLabeledStatFromHtml(html: string, label: string): string | undefined {
+	const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const patterns = [
+		new RegExp(
+			`SplitStats-name">${escapedLabel}</span><span class="SplitStats-price">([^<]+)</span>`,
+		),
+		new RegExp(
+			`Summary-label">${escapedLabel}</span><span class="Summary-value">([^<]+)</span>`,
+		),
 	];
 
-	for (const pattern of visibleMarketCapPatterns) {
+	for (const pattern of patterns) {
 		const match = html.match(pattern);
-		const marketCap = parseCompactMarketCap(match?.[1]);
-		if (marketCap != null) {
-			return marketCap;
+		if (match?.[1] != null && match[1] !== "") {
+			return match[1];
 		}
 	}
 
-	return null;
+	return undefined;
+}
+
+function parseMarketCapFromHtml(html: string): number | null {
+	return parseCompactMarketCap(parseLabeledStatFromHtml(html, "Market Cap"));
+}
+
+function parsePlainPrice(value: string | undefined): number | null {
+	if (value == null || value === "" || value === "-") {
+		return null;
+	}
+
+	return parseNumber(value.replaceAll(",", ""));
+}
+
+function parseFiftyTwoWeekHighFromHtml(html: string): number | null {
+	const fromStats = parsePlainPrice(
+		parseLabeledStatFromHtml(html, "52 Week High"),
+	);
+	if (fromStats != null) {
+		return fromStats;
+	}
+
+	const rangeMatch = html.match(
+		/QuoteStrip-fiftyTwoWeekRange">([^<]+)<!-- --> - <!-- -->([^<]+)<\/div>/,
+	);
+	return parsePlainPrice(rangeMatch?.[2]);
 }
 
 function parseNameFromHtml(html: string): string | null {
@@ -75,7 +106,7 @@ function parseNameFromHtml(html: string): string | null {
 
 function parseFinancialQuoteJsonLd(
 	html: string,
-): Omit<CnbcQuote, "marketCap"> | null {
+): Omit<CnbcQuote, "marketCap" | "52wh"> | null {
 	for (const match of html.matchAll(
 		/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi,
 	)) {
@@ -123,6 +154,7 @@ export function parseCnbcQuoteHtml(
 	const normalizedSymbol = symbol.toUpperCase();
 	const fromJsonLd = parseFinancialQuoteJsonLd(html);
 	const marketCap = parseMarketCapFromHtml(html);
+	const fiftyTwoWeekHigh = parseFiftyTwoWeekHighFromHtml(html);
 	const name = fromJsonLd?.name ?? parseNameFromHtml(html);
 
 	if (fromJsonLd?.price != null && fromJsonLd.changePercent != null) {
@@ -132,6 +164,7 @@ export function parseCnbcQuoteHtml(
 			price: fromJsonLd.price,
 			changePercent: fromJsonLd.changePercent,
 			marketCap,
+			"52wh": fiftyTwoWeekHigh,
 		};
 	}
 
@@ -144,6 +177,7 @@ export function parseCnbcQuoteHtml(
 		changePercent:
 			fromJsonLd?.changePercent ?? fromQuoteStrip.changePercent,
 		marketCap,
+		"52wh": fiftyTwoWeekHigh,
 	};
 }
 

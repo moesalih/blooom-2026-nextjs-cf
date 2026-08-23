@@ -4,6 +4,7 @@ import type { BasketPosition } from "@/lib/basket-storage";
 import type { AccountGroup, PositionRow } from "@/lib/basket-valuations";
 import {
 	changeColorClass,
+	formatHighPriceTooltip,
 	formatPortfolioPercent,
 	formatPortfolioValue,
 	portfolioShare,
@@ -12,6 +13,11 @@ import {
 	formatChangePercent,
 	formatPrice,
 } from "@/components/price-list";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 export type BasketMobileColumnView = "value" | "change" | "percent";
@@ -248,6 +254,50 @@ export function BasketPositionList({
 	);
 }
 
+function PositionPrice({
+	price,
+	highPrice,
+	type,
+	isPending,
+	isError,
+}: {
+	price: number | null;
+	highPrice: number | null;
+	type: BasketPosition["type"];
+	isPending: boolean;
+	isError: boolean;
+}) {
+	if (isPending) {
+		return (
+			<span className="inline-block h-4 w-14 animate-pulse rounded bg-black/10 dark:bg-white/10" />
+		);
+	}
+
+	if (isError) {
+		return "—";
+	}
+
+	const formattedPrice = formatPrice(price);
+	const tooltip = formatHighPriceTooltip(type, highPrice, price);
+	if (tooltip == null) {
+		return formattedPrice;
+	}
+
+	return (
+		<Tooltip>
+			<TooltipTrigger
+				render={<span />}
+				className="cursor-help"
+			>
+				{formattedPrice}
+			</TooltipTrigger>
+			<TooltipContent className="whitespace-nowrap">
+				{tooltip}
+			</TooltipContent>
+		</Tooltip>
+	);
+}
+
 function PositionRowView({
 	row,
 	portfolioTotal,
@@ -270,6 +320,7 @@ function PositionRowView({
 	const {
 		position,
 		price,
+		highPrice,
 		changePercent,
 		changeValue,
 		value,
@@ -301,13 +352,13 @@ function PositionRowView({
 					hideUnlessChange,
 				)}
 			>
-				{isPending ? (
-					<span className="inline-block h-4 w-14 animate-pulse rounded bg-black/10 dark:bg-white/10" />
-				) : isError ? (
-					"—"
-				) : (
-					formatPrice(price)
-				)}
+				<PositionPrice
+					price={price}
+					highPrice={highPrice}
+					type={position.type}
+					isPending={isPending}
+					isError={isError}
+				/>
 			</div>
 
 			<div
