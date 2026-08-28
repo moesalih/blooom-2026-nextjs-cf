@@ -70,6 +70,15 @@ export function formatPortfolioPercent(value: number | null): string {
 	return `${value.toFixed(1)}%`;
 }
 
+export function formatChangePercent(value: number | null): string {
+	if (value == null || Number.isNaN(value) || !Number.isFinite(value)) {
+		return "—";
+	}
+
+	const sign = value > 0 ? "+" : value < 0 ? "−" : "";
+	return `${sign}${Math.abs(value).toFixed(1)}%`;
+}
+
 /** Convert a USD value into portfolio currency for display. */
 export function formatPortfolioValue(
 	usdValue: number | null,

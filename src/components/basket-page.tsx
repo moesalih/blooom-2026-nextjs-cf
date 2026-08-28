@@ -15,10 +15,13 @@ import {
 import { BasketSettingsDialog } from "@/components/basket/settings-dialog";
 import { useBasketState } from "@/components/basket/use-basket-state";
 import { useBasketValuations } from "@/components/basket/use-basket-valuations";
-import { formatChangePercent } from "@/components/price-list";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { changeColorClass, formatPortfolioValue } from "@/lib/basket-format";
+import {
+	changeColorClass,
+	formatChangePercent,
+	formatPortfolioValue,
+} from "@/lib/basket-format";
 import {
 	type BasketPosition,
 	createId,

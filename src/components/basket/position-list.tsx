@@ -4,15 +4,13 @@ import type { BasketPosition } from "@/lib/basket-storage";
 import type { AccountGroup, PositionRow } from "@/lib/basket-valuations";
 import {
 	changeColorClass,
+	formatChangePercent,
 	formatHighPriceTooltip,
 	formatPortfolioPercent,
 	formatPortfolioValue,
 	portfolioShare,
 } from "@/lib/basket-format";
-import {
-	formatChangePercent,
-	formatPrice,
-} from "@/components/price-list";
+import { formatPrice } from "@/components/price-list";
 import {
 	Tooltip,
 	TooltipContent,
