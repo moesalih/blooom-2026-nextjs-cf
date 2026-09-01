@@ -1,0 +1,56 @@
+{
+    "symbol": "spcx",
+    "csvUrl": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrNUPHvMinlOsC-TjYerj5gHipU9nL15HI2GmZFsHdiGBQxb4y8NbR6gGpiP7mNzHnbztuHZdEnSkh/pub?gid=0&single=true&output=csv",
+    "charts": [
+        {
+            "title": "Revenue Segments",
+            "metrics": [
+                "Space: Launch Services",
+                "Space: Launch & Development",
+                "Connectivity: Consumer",
+                "Connectivity: Enterprise & Government",
+                "AI: Advertising",
+                "AI: AI Solutions & Infrastructure"
+            ],
+            "stacked": true
+        },
+        {
+            "title": "Revenue & Income",
+            "metrics": [
+                "Total Revenue",
+                "Total Income (Loss) from Operations"
+            ],
+            "stacked": false
+        },
+        {
+            "title": "AI: Compute",
+            "metrics": [
+                "Nameplate compute (in GW)"
+            ],
+            "stacked": true
+        },
+        {
+            "title": "Connectivity: Starlink Subscribers",
+            "metrics": [
+                "Starlink Subscribers (millions)"
+            ],
+            "stacked": true
+        },
+        {
+            "title": "Space: Launches",
+            "metrics": [
+                "Customer launches (#)",
+                "Internal launches (#)"
+            ],
+            "stacked": true
+        },
+        {
+            "title": "Space: Payloads",
+            "metrics": [
+                "Customer payloads (metric tons)",
+                "Internal payloads (metric tons)"
+            ],
+            "stacked": true
+        }
+    ]
+}
