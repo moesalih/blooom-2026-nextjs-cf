@@ -1,17 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+
 import {
-	Bar,
-	BarChart,
-	CartesianGrid,
-	Legend,
-	ResponsiveContainer,
-	Tooltip,
-	XAxis,
-	YAxis,
-	type TooltipContentProps,
-} from "recharts";
+	ChartContainer,
+	ChartLegend,
+	ChartLegendContent,
+	ChartTooltip,
+	ChartTooltipContent,
+	type ChartConfig,
+} from "@/components/ui/chart";
 
 export type CsvChart = {
 	title: string;
@@ -38,7 +37,6 @@ const compact = new Intl.NumberFormat("en", {
 	notation: "compact",
 	maximumFractionDigits: 1,
 });
-const full = new Intl.NumberFormat("en", { maximumFractionDigits: 1 });
 
 export function CsvCharts({ config }: { config: CsvChartsConfig }) {
 	const { data, isPending, error } = useQuery({
@@ -69,55 +67,56 @@ export function CsvCharts({ config }: { config: CsvChartsConfig }) {
 								<h2 className="mb-2 text-center font-medium ">
 									{chart.title}
 								</h2>
-								<div className="aspect-square w-full sm:aspect-[2/1]">
-									<ResponsiveContainer>
-										<BarChart
-											data={toChartData(data, chart.metrics)}
-											margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
-										>
-											<CartesianGrid
-												vertical={false}
-												stroke="var(--border)"
-											/>
-											<XAxis
-												dataKey="period"
-												tick={{ fontSize: 12 }}
-												tickLine={false}
-												axisLine={false}
-											/>
-											<YAxis
-												tick={{ fontSize: 12 }}
-												tickLine={false}
-												axisLine={false}
-												tickFormatter={(v: number) => compact.format(v)}
-											/>
-											<Tooltip
-												cursor={{ fill: "rgba(255, 255, 255, 0.04)" }}
-												content={ChartTooltip}
+								<ChartContainer
+									config={toChartConfig(chart.metrics)}
+									className="aspect-square w-full sm:aspect-[2/1]"
+								>
+									<BarChart
+										data={toChartData(data, chart.metrics)}
+										margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
+									>
+										<CartesianGrid
+											vertical={false}
+											stroke="var(--border)"
+										/>
+										<XAxis
+											dataKey="period"
+											tick={{ fontSize: 12 }}
+											tickLine={false}
+											axisLine={false}
+										/>
+										<YAxis
+											tick={{ fontSize: 12 }}
+											tickLine={false}
+											axisLine={false}
+											tickFormatter={(v: number) => compact.format(v)}
+										/>
+										<ChartTooltip
+											content={
+												<ChartTooltipContent className="min-w-56 [&_.justify-between]:gap-4" />
+											}
+											isAnimationActive={false}
+										/>
+										<ChartLegend
+											verticalAlign="top"
+											content={
+												<ChartLegendContent className="flex-wrap gap-x-3 gap-y-2 leading-tight text-muted-foreground" />
+											}
+											itemSorter={(item) =>
+												chart.metrics.indexOf(String(item.dataKey))
+											}
+										/>
+										{chart.metrics.map((metric, i) => (
+											<Bar
+												key={metric}
+												dataKey={metric}
+												fill={COLORS[i % COLORS.length]}
+												stackId={chart.stacked ? "stack" : undefined}
 												isAnimationActive={false}
 											/>
-											<Legend
-												position={"top"}
-												offset={10}
-												wrapperStyle={{ color: "#888", fontSize: 12 }}
-												iconType="square"
-												iconSize={10}
-												itemSorter={(item) =>
-													chart.metrics.indexOf(String(item.dataKey))
-												}
-											/>
-											{chart.metrics.map((metric, i) => (
-												<Bar
-													key={metric}
-													dataKey={metric}
-													fill={COLORS[i % COLORS.length]}
-													stackId={chart.stacked ? "stack" : undefined}
-													isAnimationActive={false}
-												/>
-											))}
-										</BarChart>
-									</ResponsiveContainer>
-								</div>
+										))}
+									</BarChart>
+								</ChartContainer>
 							</section>
 						))}
 					</div>
@@ -127,24 +126,12 @@ export function CsvCharts({ config }: { config: CsvChartsConfig }) {
 	);
 }
 
-function ChartTooltip({ active, label, payload }: TooltipContentProps) {
-	if (!active || !payload?.length) return null;
-
-	return (
-		<div className="rounded-md border border-neutral-700 bg-neutral-900 px-2.5 py-1.5 text-xs leading-5 text-neutral-100">
-			<div className="mb-0.5 font-medium">{label}</div>
-			{payload.map((item) => (
-				<div key={String(item.dataKey)} className="flex items-center gap-1.5">
-					<span
-						className="inline-block size-2 shrink-0 rounded-[1px]"
-						style={{ background: item.color ?? item.fill }}
-					/>
-					<span>
-						{item.name}: {full.format(Number(item.value))}
-					</span>
-				</div>
-			))}
-		</div>
+function toChartConfig(metrics: string[]): ChartConfig {
+	return Object.fromEntries(
+		metrics.map((metric, i) => [
+			metric,
+			{ label: metric, color: COLORS[i % COLORS.length] },
+		]),
 	);
 }
 
