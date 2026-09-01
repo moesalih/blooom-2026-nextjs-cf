@@ -1,5 +1,5 @@
 {
-    "symbol": "spcx",
+    "title": "SpaceX Financials",
     "csvUrl": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrNUPHvMinlOsC-TjYerj5gHipU9nL15HI2GmZFsHdiGBQxb4y8NbR6gGpiP7mNzHnbztuHZdEnSkh/pub?gid=0&single=true&output=csv",
     "charts": [
         {
