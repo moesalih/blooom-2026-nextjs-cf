@@ -51,6 +51,15 @@
                 "Internal payloads (metric tons)"
             ],
             "stacked": true
+        },
+        {
+            "title": "Capex",
+            "metrics": [
+                "Space Capex",
+                "Connectivity Capex",
+                "AI Capex"
+            ],
+            "stacked": true
         }
     ]
 }
