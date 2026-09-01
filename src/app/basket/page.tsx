@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { BasketPage } from "@/components/basket-page";
+import { BasketPage } from "@/components/basket/basket-page";
 
 export const metadata: Metadata = {
 	title: "Basket · Blooom",

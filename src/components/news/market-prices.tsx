@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ShoppingBasketIcon } from "lucide-react";
-import { ColumnHeader } from "./price-list";
-import { CryptoPrices } from "./crypto-prices";
-import { INDEX_SYMBOLS, StockPrices, TopStockPrices } from "./stock-prices";
+import { ColumnHeader } from "@/components/news/price-list";
+import { CryptoPrices } from "@/components/news/crypto-prices";
+import { INDEX_SYMBOLS, StockPrices, TopStockPrices } from "@/components/news/stock-prices";
 
 export function MarketPrices() {
 	return (

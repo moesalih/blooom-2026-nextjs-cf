@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { PriceRow } from "./price-list";
+import { PriceRow } from "@/components/news/price-list";
 
 export const INDEX_SYMBOLS = ["SPY", "QQQ", "SOXL"] as const;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { NewsItemCard } from "@/components/news-item-card";
+import { NewsItemCard } from "@/components/news/news-item-card";
 import type { NewsItem } from "@/lib/news-item";
 import { useQuery } from "@tanstack/react-query";
 

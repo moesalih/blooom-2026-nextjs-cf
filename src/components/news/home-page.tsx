@@ -1,7 +1,7 @@
-import { ColumnHeader } from "./price-list";
-import { MarketPrices } from "./market-prices";
-import { TechNews } from "./tech-news";
-import { WorldNews } from "./world-news";
+import { ColumnHeader } from "@/components/news/price-list";
+import { MarketPrices } from "@/components/news/market-prices";
+import { TechNews } from "@/components/news/tech-news";
+import { WorldNews } from "@/components/news/world-news";
 
 export function HomePage() {
 	return (

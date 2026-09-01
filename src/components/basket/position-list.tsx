@@ -10,7 +10,7 @@ import {
 	formatPortfolioValue,
 	portfolioShare,
 } from "@/lib/basket-format";
-import { formatPrice } from "@/components/price-list";
+import { formatPrice } from "@/lib/format";
 import {
 	Tooltip,
 	TooltipContent,
