@@ -2,45 +2,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { PriceRow } from "@/components/news/price-list";
+import { fetchStockPrice } from "@/lib/basket-quotes";
 
 export const INDEX_SYMBOLS = ["SPY", "QQQ", "SOXL"] as const;
-
-type StockRowData = {
-	symbol: string;
-	price: number | null;
-	changePercent: number | null;
-};
-
-async function fetchStock(symbol: string): Promise<StockRowData> {
-	const response = await fetch(`/api/stocks/${encodeURIComponent(symbol)}`);
-
-	if (!response.ok) {
-		throw new Error("Failed to load stock price");
-	}
-
-	const json = (await response.json()) as {
-		symbol?: string;
-		price?: number | null;
-		changePercent?: number | null;
-	};
-
-	return {
-		symbol,
-		price:
-			typeof json.price === "number" && !Number.isNaN(json.price)
-				? json.price
-				: null,
-		changePercent:
-			typeof json.changePercent === "number" && !Number.isNaN(json.changePercent)
-				? json.changePercent
-				: null,
-	};
-}
 
 function StockRow({ symbol }: { symbol: string }) {
 	const { data, isPending, isError } = useQuery({
 		queryKey: ["stock", symbol],
-		queryFn: () => fetchStock(symbol),
+		queryFn: () => fetchStockPrice(symbol),
 	});
 
 	return (
