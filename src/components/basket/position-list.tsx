@@ -1,5 +1,9 @@
 "use client";
 
+import type {
+	BasketListView,
+	BasketMobileColumnView,
+} from "@/lib/basket-ui-prefs";
 import type { BasketPosition } from "@/lib/basket-storage";
 import type { AccountGroup, PositionRow } from "@/lib/basket-valuations";
 import {
@@ -18,8 +22,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-export type BasketMobileColumnView = "value" | "change" | "percent";
-export type BasketListView = "accounts" | "combined";
+export type { BasketListView, BasketMobileColumnView };
 
 type ColumnVisibility = {
 	hideUnlessValue?: string;

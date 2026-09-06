@@ -9,11 +9,12 @@ import { BasketPositionDialog } from "@/components/basket/position-dialog";
 import {
 	BasketPositionList,
 	BasketPositionListSkeleton,
-	type BasketListView,
-	type BasketMobileColumnView,
 } from "@/components/basket/position-list";
 import { BasketSettingsDialog } from "@/components/basket/settings-dialog";
-import { useBasketState } from "@/components/basket/use-basket-state";
+import {
+	useBasketState,
+	useBasketUiPrefs,
+} from "@/components/basket/use-basket-state";
 import { useBasketValuations } from "@/components/basket/use-basket-valuations";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -60,9 +61,8 @@ export function BasketPage() {
 		open: false,
 	});
 	const [settingsOpen, setSettingsOpen] = useState(false);
-	const [listView, setListView] = useState<BasketListView>("accounts");
-	const [mobileColumnView, setMobileColumnView] =
-		useState<BasketMobileColumnView>("value");
+	const { listView, mobileColumnView, setListView, setMobileColumnView } =
+		useBasketUiPrefs();
 
 	return (
 		<div className="min-h-screen bg-background text-foreground">

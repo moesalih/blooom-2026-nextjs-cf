@@ -10,6 +10,14 @@ import {
 	pruneAccounts,
 	saveBasket,
 } from "@/lib/basket-storage";
+import {
+	type BasketListView,
+	type BasketMobileColumnView,
+	type BasketUiPrefs,
+	DEFAULT_BASKET_UI_PREFS,
+	loadBasketUiPrefs,
+	saveBasketUiPrefs,
+} from "@/lib/basket-ui-prefs";
 
 export function useBasketState() {
 	const [accounts, setAccounts] = useState<BasketAccount[]>([]);
@@ -60,5 +68,34 @@ export function useBasketState() {
 		updatedAt,
 		hydrated,
 		persist,
+	};
+}
+
+export function useBasketUiPrefs() {
+	const [listView, setListView] = useState<BasketListView>(
+		DEFAULT_BASKET_UI_PREFS.listView,
+	);
+	const [mobileColumnView, setMobileColumnView] =
+		useState<BasketMobileColumnView>(DEFAULT_BASKET_UI_PREFS.mobileColumnView);
+
+	useEffect(() => {
+		const prefs = loadBasketUiPrefs();
+		setListView(prefs.listView);
+		setMobileColumnView(prefs.mobileColumnView);
+	}, []);
+
+	const persistPrefs = useCallback((prefs: BasketUiPrefs) => {
+		setListView(prefs.listView);
+		setMobileColumnView(prefs.mobileColumnView);
+		saveBasketUiPrefs(prefs);
+	}, []);
+
+	return {
+		listView,
+		mobileColumnView,
+		setListView: (next: BasketListView) =>
+			persistPrefs({ listView: next, mobileColumnView }),
+		setMobileColumnView: (next: BasketMobileColumnView) =>
+			persistPrefs({ listView, mobileColumnView: next }),
 	};
 }
