@@ -1,6 +1,7 @@
 import { ColumnHeader } from "@/components/news/price-list";
 import { MarketPrices } from "@/components/news/market-prices";
 import { TechNews } from "@/components/news/tech-news";
+import { TechNewsSpeakButton } from "@/components/news/tech-news-speak-button";
 import { WorldNews } from "@/components/news/world-news";
 
 export function HomePage() {
@@ -16,7 +17,9 @@ export function HomePage() {
 				<div className="grid gap-12 2xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,2.1fr)]">
 					<MarketPrices />
 					<section>
-						<ColumnHeader>Tech News</ColumnHeader>
+						<ColumnHeader action={<TechNewsSpeakButton />}>
+							Tech News
+						</ColumnHeader>
 						<TechNews />
 					</section>
 					<section>

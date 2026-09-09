@@ -5,16 +5,21 @@ import { formatPrice } from "@/lib/format";
 export function ColumnHeader({
 	children,
 	bordered = true,
+	action,
 }: {
 	children: ReactNode;
 	bordered?: boolean;
+	action?: ReactNode;
 }) {
 	return (
-		<h2
-			className={`mb-3 text-base font-semibold tracking-tight text-foreground/50 ${bordered ? "border-b border-black/10 pb-2 dark:border-white/10" : ""}`}
+		<div
+			className={`mb-3 flex items-center gap-1 ${bordered ? "border-b border-black/10 pb-2 dark:border-white/10" : ""}`}
 		>
-			{children}
-		</h2>
+			<h2 className="text-base font-semibold tracking-tight text-foreground/50">
+				{children}
+			</h2>
+			{action}
+		</div>
 	);
 }
 
